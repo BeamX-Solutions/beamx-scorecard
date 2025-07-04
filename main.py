@@ -103,7 +103,7 @@ async def generate_report(input: ScorecardInput):
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",  # or "gpt-4" if available
             messages=[
                 {"role": "system", "content": "You are a business growth advisor."},
@@ -112,7 +112,7 @@ async def generate_report(input: ScorecardInput):
             max_tokens=300,
             temperature=0.7
         )
-        advisory = response.choices[0].message['content'].strip()
+        advisory = response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
         # Fallback to hardcoded advisory in case of API failure
