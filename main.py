@@ -92,17 +92,11 @@ async def generate_report(input: ScorecardInput):
     Financial: {financial_score}/25, Growth: {growth_score}/25, Digital: {digital_score}/25, Operations: {operations_score}/25
     Use two smart paragraphs and include 2 practical action steps.
     """
-    # Generate advisory with bullet points
+    # Generate advisory with bullet points, excluding Overview
     advisory = f"""
-    - **Overview**: The {input.industry} business achieves a total score of {total_score}/100, classified as {label}. 
-      - Financial performance at {financial_score}/25 highlights opportunities to strengthen cash flow and profitability.
-      - Growth readiness at {growth_score}/25 suggests a focus on enhancing customer acquisition and retention.
-      - Digital maturity at {digital_score}/25 indicates potential for advanced analytics adoption.
-      - Operational efficiency at {operations_score}/25 points to the need for process optimization and scalability.
-    - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion.
-      - Leveraging these strengths can drive competitive advantage in the {input.industry} sector.
-      - Addressing weaker areas will unlock further growth potential.
-
+    - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
+      - Leveraging these strengths can drive a competitive advantage.
+      - Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
     - **Action Steps**:
       - Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
       - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
