@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Dict
 import datetime
 import os
+import openai
 
 app = FastAPI()
 
@@ -19,6 +20,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Set up OpenAI API key from environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    raise ValueError("OPENAI_API_KEY environment variable not set")
 
 class ScorecardInput(BaseModel):
     revenue: str
@@ -91,16 +97,33 @@ async def generate_report(input: ScorecardInput):
     Write a growth advisory for a {input.industry} business with:
     Financial: {financial_score}/25, Growth: {growth_score}/25, Digital: {digital_score}/25, Operations: {operations_score}/25
     Use two smart paragraphs and include 2 practical action steps.
+    Format the response with:
+    - **Strategic Insights**: [paragraph 1 with 2-3 bullet points]
+    - **Action Steps**: [paragraph 2 with 2 bullet points for action steps]
     """
-    # Generate advisory with bullet points, excluding Overview
-    advisory = f"""
-    - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
-      - Leveraging these strengths can drive a competitive advantage.
-      - Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
-    - **Action Steps**:
-      - Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
-      - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
-    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # or "gpt-4" if available
+            messages=[
+                {"role": "system", "content": "You are a business growth advisor."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=300,
+            temperature=0.7
+        )
+        advisory = response.choices[0].message['content'].strip()
+    except Exception as e:
+        print(f"Error calling OpenAI API: {e}")
+        # Fallback to hardcoded advisory in case of API failure
+        advisory = f"""
+        - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
+          - Leveraging these strengths can drive a competitive advantage.
+          - Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
+        - **Action Steps**:
+          - Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
+          - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
+        """
 
     return {
         "total_score": total_score,
