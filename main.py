@@ -10,7 +10,7 @@ app = FastAPI()
 
 # CORS configuration
 origins = [
-    "https://beamxsolutions.netlify.app",  # frontend on Netlify
+    "https://beamxsolutions.com",  # frontend on Netlify
 ]
 
 app.add_middleware(
