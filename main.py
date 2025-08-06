@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict
 import datetime
 import os
 import openai
+from supabase import create_client, Client
 
 app = FastAPI()
 
@@ -25,6 +26,11 @@ app.add_middleware(
 openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set")
+
+# Initialize Supabase client
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_ANON_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
 
 class ScorecardInput(BaseModel):
     revenue: str
@@ -76,6 +82,7 @@ def score_operational_efficiency(data):
 
 @app.post("/generate-report")
 async def generate_report(input: ScorecardInput):
+    # Calculate scores
     financial_score = score_financial_health(input)
     growth_score = score_growth_readiness(input)
     digital_score = score_digital_maturity(input)
@@ -83,6 +90,7 @@ async def generate_report(input: ScorecardInput):
 
     total_score = financial_score + growth_score + digital_score + operations_score
 
+    # Determine label
     if total_score >= 90:
         label = "Built for Scale"
     elif total_score >= 70:
@@ -92,7 +100,7 @@ async def generate_report(input: ScorecardInput):
     else:
         label = "Early Stage"
 
-    # New prompt for growth advisory
+    # Generate advisory
     prompt = f"""
     Write a growth advisory for a {input.industry} business with:
     Financial: {financial_score}/25, Growth: {growth_score}/25, Digital: {digital_score}/25, Operations: {operations_score}/25
@@ -104,7 +112,7 @@ async def generate_report(input: ScorecardInput):
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",  # or "gpt-4" if available
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a business growth advisor."},
                 {"role": "user", "content": prompt}
@@ -115,7 +123,6 @@ async def generate_report(input: ScorecardInput):
         advisory = response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
-        # Fallback to hardcoded advisory in case of API failure
         advisory = f"""
         - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
           - Leveraging these strengths can drive a competitive advantage.
@@ -125,15 +132,43 @@ async def generate_report(input: ScorecardInput):
           - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
         """
 
+    # Prepare data for Supabase
+    scores = {
+        "financial": financial_score,
+        "growth": growth_score,
+        "digital": digital_score,
+        "operations": operations_score
+    }
+    
+    # Save to Supabase basic_assessments table
+    try:
+        response = supabase.table("basic_assessments").insert({
+            "revenue": input.revenue,
+            "profit_margin_known": input.profit_margin_known,
+            "monthly_burn": input.monthly_burn,
+            "cac_tracked": input.cac_tracked,
+            "retention_rate": input.retention_rate,
+            "digital_campaigns": input.digital_campaigns,
+            "analytics_tools": input.analytics_tools,
+            "crm_used": input.crm_used,
+            "data_mgmt": input.data_mgmt,
+            "sops_doc": input.sops_doc,
+            "team_size": input.team_size,
+            "pain_point": input.pain_point,
+            "industry": input.industry,
+            "scores": scores,
+            "total_score": total_score,
+            "advisory": advisory,
+            "generated_at": datetime.datetime.utcnow().isoformat()
+        }).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving to Supabase: {str(e)}")
+
+    # Return response
     return {
         "total_score": total_score,
         "label": label,
-        "breakdown": {
-            "financial": financial_score,
-            "growth": growth_score,
-            "digital": digital_score,
-            "operations": operations_score,
-        },
+        "breakdown": scores,
         "advisory": advisory,
         "industry": input.industry,
         "generated_at": datetime.datetime.utcnow().isoformat()
