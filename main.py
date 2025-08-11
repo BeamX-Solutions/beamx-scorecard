@@ -104,10 +104,15 @@ async def generate_report(input: ScorecardInput):
     prompt = f"""
     Write a growth advisory for a {input.industry} business with:
     Financial: {financial_score}/25, Growth: {growth_score}/25, Digital: {digital_score}/25, Operations: {operations_score}/25
-    Use two smart paragraphs and include 2 practical action steps.
-    Format the response with:
-    - **Strategic Insights**: [paragraph 1 with 2-3 bullet points]
-    - **Action Steps**: [paragraph 2 with 2 bullet points for action steps]
+    Provide strategic insights in 2-3 bullet points and 2 practical action steps in bullet points.
+    Format the response using Markdown:
+    **Strategic Insights:**
+    - Insight 1
+    - Insight 2
+    - Insight 3
+    **Action Steps:**
+    - Step 1
+    - Step 2
     """
 
     try:
@@ -124,13 +129,14 @@ async def generate_report(input: ScorecardInput):
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
         advisory = f"""
-        - Strategic Insights: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
-          - Leveraging these strengths can drive a competitive advantage.
-          - Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
-        - Action Steps:
-          - Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
-          - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
-        """
+**Strategic Insights:**
+- This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
+- Leveraging these strengths can drive a competitive advantage.
+- Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
+**Action Steps:**
+- Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
+- Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
+        """.strip()
 
     # Prepare data for Supabase
     scores = {
