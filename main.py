@@ -124,10 +124,10 @@ async def generate_report(input: ScorecardInput):
     except Exception as e:
         print(f"Error calling OpenAI API: {e}")
         advisory = f"""
-        - **Strategic Insights**: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
+        - Strategic Insights: This scorecard reveals a balanced profile with notable strengths in operations and digital, offering a solid base for expansion in the {input.industry} sector.
           - Leveraging these strengths can drive a competitive advantage.
           - Addressing weaker areas, such as financial and growth metrics, will unlock further potential.
-        - **Action Steps**:
+        - Action Steps:
           - Implement a real-time financial tracking dashboard to monitor and optimize profit margins, boosting the financial score.
           - Deploy a CRM system to improve customer retention and track acquisition costs, enhancing growth readiness.
         """
