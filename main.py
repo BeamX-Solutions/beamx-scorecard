@@ -378,9 +378,7 @@ async def generate_report(input_data: ScorecardInput):
                 "industry": input_data.industry,
                 "scores": scores,
                 "total_score": total_score,
-                "label": label,
                 "advisory": advisory,
-                "model_used": "gpt-5",  # Track which model was used
                 "generated_at": timestamp
             }
             
