@@ -276,7 +276,14 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     
     • [Strategic step for next 90 days]
     
-    IMPORTANT: Each bullet point must be on its own line with a blank line after it for proper formatting. Start each bullet point on a new line and add a line break after each point. Do not run bullet points together in a single paragraph.
+    CRITICAL FORMATTING RULES:
+    - Each bullet point must be on its own line with a blank line after it
+    - NEVER use em dashes (—) anywhere in your response
+    - NEVER use hyphens (-) for emphasis or connecting ideas
+    - Instead of dashes, use words like "and", "while", "to", or rephrase sentences completely
+    - Use commas, periods, and conjunctions instead of any type of dash
+    - Example: Instead of "lead-to-close" write "lead to close" or "conversion process"
+    - Example: Instead of "ROI—implement" write "ROI. Implement" or "ROI by implementing"
     """
     
     try:
