@@ -8,15 +8,15 @@ from openai import OpenAI
 from supabase import create_client, Client
 import logging
 
-# Set up logging
+# Configure logging for application monitoring
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Business Scorecard API", version="2.0.0")
 
-# CORS configuration
+# CORS configuration for frontend access
 origins = [
-    "https://beamxsolutions.com",  # frontend on Netlify
+    "https://beamxsolutions.com",  # Production frontend on Netlify
 ]
 
 app.add_middleware(
@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Set up OpenAI client with proper error handling
+# Initialize OpenAI client with error handling
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set")
@@ -39,7 +39,7 @@ except Exception as e:
     logger.error(f"Failed to initialize OpenAI client: {e}")
     raise ValueError(f"Failed to initialize OpenAI client: {e}")
 
-# Initialize Supabase client with validation
+# Initialize Supabase client for data persistence
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_ANON_KEY")
 
@@ -53,7 +53,7 @@ except Exception as e:
     logger.error(f"Failed to initialize Supabase client: {e}")
     raise ValueError(f"Failed to initialize Supabase client: {e}")
 
-# Enhanced input model with validation
+# Pydantic model for input validation and API documentation
 class ScorecardInput(BaseModel):
     revenue: Literal[
         "Under $10K", 
@@ -61,19 +61,20 @@ class ScorecardInput(BaseModel):
         "$50K–$250K", 
         "$250K–$1M", 
         "Over $1M"
-    ] = Field(..., description="Monthly revenue range")
+    ] = Field(..., description="Annual revenue range")
     
     profit_margin_known: Literal["Yes", "No"] = Field(
         ..., description="Whether profit margins are tracked"
     )
     
-    monthly_burn: Literal[
+    # Changed from monthly_burn to monthly_expenses for better user understanding
+    monthly_expenses: Literal[
         "Unknown", 
         "≤$1K", 
         "$1K–$5K", 
         "$5K–$20K", 
         "$20K+"
-    ] = Field(..., description="Monthly burn rate")
+    ] = Field(..., description="Monthly operating expenses")
     
     cac_tracked: Literal["Yes", "No"] = Field(
         ..., description="Whether Customer Acquisition Cost is tracked"
@@ -123,17 +124,20 @@ class ScorecardInput(BaseModel):
         "50+"
     ] = Field(..., description="Team size")
     
+    # Updated pain points to include new options
     pain_point: Literal[
         "Not growing", 
         "Systems are chaotic", 
-        "Don't know what to optimize", 
-        "Need funding", 
+        "Don't know what to optimize",
+        "Need to reduce cost", 
+        "Need funding",
+        "Need more clients/customers", 
         "Growing fast, need structure"
     ] = Field(..., description="Primary business pain point")
     
     industry: str = Field(..., min_length=1, max_length=100, description="Industry sector")
 
-# --- Enhanced Scoring Functions ---
+# Scoring function for financial health assessment
 def score_financial_health(data: ScorecardInput) -> int:
     """Calculate financial health score (0-25 points)"""
     revenue_map = {
@@ -143,7 +147,8 @@ def score_financial_health(data: ScorecardInput) -> int:
         "$250K–$1M": 4, 
         "Over $1M": 5
     }
-    burn_map = {
+    # Updated mapping name for consistency with new field name
+    expenses_map = {
         "Unknown": 1, 
         "≤$1K": 2, 
         "$1K–$5K": 3, 
@@ -153,15 +158,16 @@ def score_financial_health(data: ScorecardInput) -> int:
     
     revenue_score = revenue_map[data.revenue]
     profit_score = 1 if data.profit_margin_known == "Yes" else 0
-    burn_score = burn_map[data.monthly_burn]
+    expenses_score = expenses_map[data.monthly_expenses]  # Updated field reference
     
-    total_score = revenue_score + profit_score + burn_score
-    max_score = 5 + 1 + 5  # 11
+    total_score = revenue_score + profit_score + expenses_score
+    max_score = 5 + 1 + 5  # 11 total possible points
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Financial score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
+# Scoring function for growth readiness assessment
 def score_growth_readiness(data: ScorecardInput) -> int:
     """Calculate growth readiness score (0-25 points)"""
     retention_map = {
@@ -182,12 +188,13 @@ def score_growth_readiness(data: ScorecardInput) -> int:
     campaign_score = campaign_map[data.digital_campaigns]
     
     total_score = cac_score + retention_score + campaign_score
-    max_score = 1 + 5 + 5  # 11
+    max_score = 1 + 5 + 5  # 11 total possible points
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Growth score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
+# Scoring function for digital maturity assessment
 def score_digital_maturity(data: ScorecardInput) -> int:
     """Calculate digital maturity score (0-25 points)"""
     analytics_map = {
@@ -206,12 +213,13 @@ def score_digital_maturity(data: ScorecardInput) -> int:
     data_score = data_map[data.data_mgmt]
     
     total_score = analytics_score + crm_score + data_score
-    max_score = 5 + 1 + 5  # 11
+    max_score = 5 + 1 + 5  # 11 total possible points
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Digital score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
+# Scoring function for operational efficiency assessment
 def score_operational_efficiency(data: ScorecardInput) -> int:
     """Calculate operational efficiency score (0-25 points)"""
     sop_map = {
@@ -226,13 +234,14 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
         "11–50": 4, 
         "50+": 5
     }
+    # Updated pain point scoring with new options
     pain_map = {
         "Not growing": 1, 
         "Systems are chaotic": 2, 
         "Don't know what to optimize": 3,
-        "Need to reduce cost": 3,
+        "Need to reduce cost": 3,  # New option
         "Need funding": 4, 
-        "Need more clients/customers": 4,
+        "Need more clients/customers": 4,  # New option
         "Growing fast, need structure": 5
     }
     
@@ -241,12 +250,13 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
     pain_score = pain_map[data.pain_point]
     
     total_score = sop_score + team_score + pain_score
-    max_score = 5 + 5 + 5  # 15
+    max_score = 5 + 5 + 5  # 15 total possible points
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Operations score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
+# GPT-5 advisory generation function
 async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, int]) -> str:
     """Generate advisory using GPT-5 with proper parameters"""
     
@@ -292,7 +302,7 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
         logger.info("Calling GPT-5 API for advisory generation")
         
         response = client.chat.completions.create(
-            model="gpt-5",  # Using GPT-5
+            model="gpt-5",  # Using GPT-5 model
             messages=[
                 {
                     "role": "system", 
@@ -303,7 +313,7 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
                     "content": prompt
                 }
             ],
-            max_completion_tokens=400,  # Updated parameter name for GPT-5
+            max_completion_tokens=400,  # Token limit for response
             verbosity="medium",         # GPT-5 specific parameter
             reasoning_effort="minimal"  # GPT-5 specific parameter for faster response
         )
@@ -315,23 +325,27 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     except Exception as e:
         logger.error(f"Error calling GPT-5 API: {e}")
         
-        # Enhanced fallback advisory based on actual scores
+        # Fallback advisory generation when API fails
         strongest_area = max(scores, key=scores.get)
         weakest_area = min(scores, key=scores.get)
         
         fallback_advisory = f"""
-**Strategic Insights:**
-- Your {strongest_area} capabilities (score: {scores[strongest_area]}/25) provide a solid foundation for growth in the {input_data.industry} sector, but {weakest_area} (score: {scores[weakest_area]}/25) needs immediate attention.
-- The current pain point of "{input_data.pain_point}" directly correlates with your scoring patterns and represents your primary growth bottleneck.
-- With {input_data.team_size} team members and {input_data.revenue} revenue, you're positioned for targeted improvements that can yield significant returns.
+        **Strategic Insights:**
+        • Your {strongest_area} capabilities (score: {scores[strongest_area]}/25) provide a solid foundation for growth in the {input_data.industry} sector, but {weakest_area} (score: {scores[weakest_area]}/25) needs immediate attention.
 
-**Action Steps:**
-- Address your {weakest_area} gap by implementing systematic tracking and measurement tools to improve this core business function.
-- Leverage your strength in {strongest_area} to create a 90-day improvement plan that builds momentum while fixing foundational issues.
-        """.strip()
+        • The current pain point of "{input_data.pain_point}" directly correlates with your scoring patterns and represents your primary growth bottleneck.
+
+        • With {input_data.team_size} team members and {input_data.revenue} revenue, you're positioned for targeted improvements that can yield significant returns.
+
+        **Action Steps:**
+        • Address your {weakest_area} gap by implementing systematic tracking and measurement tools to improve this core business function.
+
+        • Leverage your strength in {strongest_area} to create a 90 day improvement plan that builds momentum while fixing foundational issues.
+                """.strip()
         
         return fallback_advisory
 
+# Main API endpoint for generating scorecard reports
 @app.post("/generate-report")
 async def generate_report(input_data: ScorecardInput):
     """Generate comprehensive business scorecard report"""
@@ -339,7 +353,7 @@ async def generate_report(input_data: ScorecardInput):
     logger.info(f"Generating report for {input_data.industry} business")
     
     try:
-        # Calculate all scores
+        # Calculate all scoring dimensions
         financial_score = score_financial_health(input_data)
         growth_score = score_growth_readiness(input_data)
         digital_score = score_digital_maturity(input_data)
@@ -347,7 +361,7 @@ async def generate_report(input_data: ScorecardInput):
         
         total_score = financial_score + growth_score + digital_score + operations_score
         
-        # Determine business maturity label
+        # Determine business maturity classification
         if total_score >= 90:
             label = "Built for Scale"
         elif total_score >= 70:
@@ -359,7 +373,7 @@ async def generate_report(input_data: ScorecardInput):
         
         logger.info(f"Total score: {total_score}/100, Label: {label}")
         
-        # Prepare scores dictionary
+        # Organize scores for response and advisory generation
         scores = {
             "financial": financial_score,
             "growth": growth_score,
@@ -367,20 +381,21 @@ async def generate_report(input_data: ScorecardInput):
             "operations": operations_score
         }
         
-        # Generate AI advisory using GPT-5
+        # Generate AI-powered business advisory
         advisory = await generate_gpt5_advisory(input_data, scores)
         
-        # Prepare timestamp
+        # Create timestamp for record keeping
         timestamp = datetime.datetime.utcnow().isoformat()
         
-        # Save to Supabase with enhanced error handling
+        # Save assessment data to Supabase database
         try:
             logger.info("Saving assessment to Supabase")
             
+            # Updated database structure to match new field names
             supabase_data = {
                 "revenue": input_data.revenue,
                 "profit_margin_known": input_data.profit_margin_known,
-                "monthly_burn": input_data.monthly_burn,
+                "monthly_expenses": input_data.monthly_expenses,  # Updated field name
                 "cac_tracked": input_data.cac_tracked,
                 "retention_rate": input_data.retention_rate,
                 "digital_campaigns": input_data.digital_campaigns,
@@ -407,7 +422,7 @@ async def generate_report(input_data: ScorecardInput):
                 detail=f"Error saving assessment data: {str(e)}"
             )
         
-        # Return comprehensive response
+        # Return comprehensive assessment results
         return {
             "total_score": total_score,
             "label": label,
@@ -424,7 +439,7 @@ async def generate_report(input_data: ScorecardInput):
         }
         
     except HTTPException:
-        # Re-raise HTTPExceptions as-is
+        # Re-raise HTTPExceptions without modification
         raise
     except Exception as e:
         logger.error(f"Unexpected error in generate_report: {str(e)}")
@@ -433,9 +448,10 @@ async def generate_report(input_data: ScorecardInput):
             detail=f"An unexpected error occurred while generating the report: {str(e)}"
         )
 
+# Health check endpoint for monitoring
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint for system monitoring"""
     return {
         "status": "healthy",
         "timestamp": datetime.datetime.utcnow().isoformat(),
@@ -443,6 +459,7 @@ async def health_check():
         "version": "2.0.0"
     }
 
+# Application entry point
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
