@@ -117,9 +117,9 @@ class ScorecardInput(BaseModel):
     ] = Field(..., description="Standard Operating Procedures documentation level")
     
     team_size: Literal[
-        "0 (solo)", 
-        "1–3", 
-        "4–10", 
+        "1 (solo)", 
+        "2–4", 
+        "5–10", 
         "11–50", 
         "50+"
     ] = Field(..., description="Team size")
@@ -228,9 +228,9 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
         "Fully documented": 5
     }
     team_map = {
-        "0 (solo)": 1, 
-        "1–3": 2, 
-        "4–10": 3, 
+        "1 (solo)": 1, 
+        "2–4": 2, 
+        "5–10": 3, 
         "11–50": 4, 
         "50+": 5
     }
