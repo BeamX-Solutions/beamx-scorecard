@@ -260,17 +260,23 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     • Team Size: {input_data.team_size}
     • Primary Pain Point: {input_data.pain_point}
     
-    Provide your response in this exact format:
+    Provide your response in this exact format with proper line breaks:
+    
     **Strategic Insights:**
+    
     • [Insight based on strongest and weakest areas]
+    
     • [Industry-specific insight]
+    
     • [Growth opportunity insight]
     
     **Action Steps:**
+    
     • [Immediate actionable step addressing lowest score]
+    
     • [Strategic step for next 90 days]
     
-    Keep insights concise but actionable. Focus on the specific scores and industry context provided. Use bullet points instead of dashes for all lists and avoid em dashes throughout the response.
+    IMPORTANT: Each bullet point must be on its own line with a blank line after it for proper formatting. Start each bullet point on a new line and add a line break after each point. Do not run bullet points together in a single paragraph.
     """
     
     try:
