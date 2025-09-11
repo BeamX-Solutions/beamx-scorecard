@@ -57,9 +57,9 @@ except Exception as e:
 class ScorecardInput(BaseModel):
     revenue: Literal[
         "Under $10K", 
-        "$10K-$50K", 
-        "$50K-$250K", 
-        "$250K-$1M", 
+        "$10K–$50K", 
+        "$50K–$250K", 
+        "$250K–$1M", 
         "Over $1M"
     ] = Field(..., description="Monthly revenue range")
     
@@ -69,9 +69,9 @@ class ScorecardInput(BaseModel):
     
     monthly_burn: Literal[
         "Unknown", 
-        "<=$1K", 
-        "$1K-$5K", 
-        "$5K-$20K", 
+        "≤$1K", 
+        "$1K–$5K", 
+        "$5K–$20K", 
         "$20K+"
     ] = Field(..., description="Monthly burn rate")
     
@@ -81,9 +81,9 @@ class ScorecardInput(BaseModel):
     
     retention_rate: Literal[
         "<10%", 
-        "10-25%", 
-        "25-50%", 
-        "50-75%", 
+        "10–25%", 
+        "25–50%", 
+        "50–75%", 
         "75%+"
     ] = Field(..., description="Customer retention rate")
     
@@ -117,9 +117,9 @@ class ScorecardInput(BaseModel):
     
     team_size: Literal[
         "0 (solo)", 
-        "1-3", 
-        "4-10", 
-        "11-50", 
+        "1–3", 
+        "4–10", 
+        "11–50", 
         "50+"
     ] = Field(..., description="Team size")
     
@@ -138,16 +138,16 @@ def score_financial_health(data: ScorecardInput) -> int:
     """Calculate financial health score (0-25 points)"""
     revenue_map = {
         "Under $10K": 1, 
-        "$10K-$50K": 2, 
-        "$50K-$250K": 3, 
-        "$250K-$1M": 4, 
+        "$10K–$50K": 2, 
+        "$50K–$250K": 3, 
+        "$250K–$1M": 4, 
         "Over $1M": 5
     }
     burn_map = {
         "Unknown": 1, 
-        "<=$1K": 2, 
-        "$1K-$5K": 3, 
-        "$5K-$20K": 4, 
+        "≤$1K": 2, 
+        "$1K–$5K": 3, 
+        "$5K–$20K": 4, 
         "$20K+": 5
     }
     
@@ -166,9 +166,9 @@ def score_growth_readiness(data: ScorecardInput) -> int:
     """Calculate growth readiness score (0-25 points)"""
     retention_map = {
         "<10%": 1, 
-        "10-25%": 2, 
-        "25-50%": 3, 
-        "50-75%": 4, 
+        "10–25%": 2, 
+        "25–50%": 3, 
+        "50–75%": 4, 
         "75%+": 5
     }
     campaign_map = {
@@ -221,9 +221,9 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
     }
     team_map = {
         "0 (solo)": 1, 
-        "1-3": 2, 
-        "4-10": 3, 
-        "11-50": 4, 
+        "1–3": 2, 
+        "4–10": 3, 
+        "11–50": 4, 
         "50+": 5
     }
     pain_map = {
@@ -250,27 +250,27 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     
     prompt = f"""
     Write a comprehensive growth advisory for a {input_data.industry} business with these scores:
-    - Financial Health: {scores['financial']}/25
-    - Growth Readiness: {scores['growth']}/25  
-    - Digital Maturity: {scores['digital']}/25
-    - Operations Efficiency: {scores['operations']}/25
+    • Financial Health: {scores['financial']}/25
+    • Growth Readiness: {scores['growth']}/25  
+    • Digital Maturity: {scores['digital']}/25
+    • Operations Efficiency: {scores['operations']}/25
     
     Business Context:
-    - Revenue: {input_data.revenue}
-    - Team Size: {input_data.team_size}
-    - Primary Pain Point: {input_data.pain_point}
+    • Revenue: {input_data.revenue}
+    • Team Size: {input_data.team_size}
+    • Primary Pain Point: {input_data.pain_point}
     
     Provide your response in this exact format:
     **Strategic Insights:**
-    - [Insight based on strongest and weakest areas]
-    - [Industry-specific insight]
-    - [Growth opportunity insight]
+    • [Insight based on strongest and weakest areas]
+    • [Industry-specific insight]
+    • [Growth opportunity insight]
     
     **Action Steps:**
-    - [Immediate actionable step addressing lowest score]
-    - [Strategic step for next 90 days]
+    • [Immediate actionable step addressing lowest score]
+    • [Strategic step for next 90 days]
     
-    Keep insights concise, actionable, and tailored to the provided scores and industry context.
+    Keep insights concise but actionable. Focus on the specific scores and industry context provided. Use bullet points instead of dashes for all lists and avoid em dashes throughout the response.
     """
     
     try:
@@ -414,7 +414,7 @@ async def generate_report(input_data: ScorecardInput):
     except Exception as e:
         logger.error(f"Unexpected error in generate_report: {str(e)}")
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"An unexpected error occurred while generating the report: {str(e)}"
         )
 
