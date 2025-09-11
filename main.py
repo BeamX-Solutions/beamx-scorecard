@@ -231,6 +231,7 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
         "Systems are chaotic": 2, 
         "Don't know what to optimize": 3,
         "Need funding": 4, 
+        "Need more clients/customers": 4,
         "Growing fast, need structure": 5
     }
     
