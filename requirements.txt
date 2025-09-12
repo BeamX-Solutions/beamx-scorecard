@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 openai
-pydantic
+pydantic[email]
 supabase
 python-multipart
 reportlab
