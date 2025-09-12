@@ -3,3 +3,7 @@ uvicorn
 openai
 pydantic
 supabase
+python-multipart
+reportlab
+python-dotenv
+resend

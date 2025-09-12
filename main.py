@@ -1,22 +1,31 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Dict, Literal
+from pydantic import BaseModel, Field, EmailStr
+from typing import Dict, Literal, Optional
 import datetime
 import os
+import base64
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 from openai import OpenAI
 from supabase import create_client, Client
+import resend
 import logging
 
 # Configure logging for application monitoring
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Business Scorecard API", version="2.0.0")
+app = FastAPI(title="Business Scorecard API", version="2.1.0")
 
 # CORS configuration for frontend access
 origins = [
     "https://beamxsolutions.com",  # Production frontend on Netlify
+    "http://localhost:3000",       # Development frontend
 ]
 
 app.add_middleware(
@@ -53,6 +62,16 @@ except Exception as e:
     logger.error(f"Failed to initialize Supabase client: {e}")
     raise ValueError(f"Failed to initialize Supabase client: {e}")
 
+# Initialize Resend client
+resend_api_key = os.getenv("RESEND_API_KEY")
+from_email = os.getenv("FROM_EMAIL", "noreply@beamxsolutions.com")  # Use your verified domain
+
+if not resend_api_key:
+    logger.warning("Resend API key not configured. Email functionality will be disabled.")
+else:
+    resend.api_key = resend_api_key
+    logger.info("Resend client initialized successfully")
+
 # Pydantic model for input validation and API documentation
 class ScorecardInput(BaseModel):
     revenue: Literal[
@@ -67,7 +86,6 @@ class ScorecardInput(BaseModel):
         ..., description="Whether profit margins are tracked"
     )
     
-    # Changed from monthly_burn to monthly_expenses for better user understanding
     monthly_expenses: Literal[
         "Unknown", 
         "≤$1K", 
@@ -124,7 +142,6 @@ class ScorecardInput(BaseModel):
         "50+"
     ] = Field(..., description="Team size")
     
-    # Updated pain points to include new options
     pain_point: Literal[
         "Not growing", 
         "Systems are chaotic", 
@@ -137,7 +154,264 @@ class ScorecardInput(BaseModel):
     
     industry: str = Field(..., min_length=1, max_length=100, description="Industry sector")
 
-# Scoring function for financial health assessment
+# Pydantic model for email request
+class EmailRequest(BaseModel):
+    email: EmailStr = Field(..., description="Recipient email address")
+    result: Dict = Field(..., description="Assessment results")
+    formData: ScorecardInput = Field(..., description="Original form data")
+
+# Function to generate PDF report
+def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
+    """Generate a PDF report of the business assessment results"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=1*inch)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=30,
+        textColor=colors.HexColor('#1f2937'),
+        alignment=1  # Center alignment
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        spaceAfter=12,
+        textColor=colors.HexColor('#374151')
+    )
+    
+    # Title and header
+    story.append(Paragraph("Business Assessment Report", title_style))
+    story.append(Paragraph("BeamX Solutions", styles['Normal']))
+    story.append(Paragraph(f"Generated on {datetime.datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Executive Summary
+    story.append(Paragraph("Executive Summary", heading_style))
+    story.append(Paragraph(f"<b>Industry:</b> {form_data.industry}", styles['Normal']))
+    story.append(Paragraph(f"<b>Team Size:</b> {form_data.team_size}", styles['Normal']))
+    story.append(Paragraph(f"<b>Annual Revenue:</b> {form_data.revenue}", styles['Normal']))
+    story.append(Paragraph(f"<b>Primary Pain Point:</b> {form_data.pain_point}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Overall Score
+    story.append(Paragraph("Overall Assessment", heading_style))
+    story.append(Paragraph(f"<b>Total Score:</b> {result['total_score']}/100", styles['Normal']))
+    story.append(Paragraph(f"<b>Business Maturity Level:</b> {result['label']}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Score Breakdown Table
+    story.append(Paragraph("Detailed Score Breakdown", heading_style))
+    
+    breakdown_data = [
+        ['Category', 'Your Score', 'Max Score', 'Percentage'],
+        ['Financial Health', f"{result['breakdown']['financial']}", '25', f"{(result['breakdown']['financial']/25)*100:.0f}%"],
+        ['Growth Readiness', f"{result['breakdown']['growth']}", '25', f"{(result['breakdown']['growth']/25)*100:.0f}%"],
+        ['Digital Maturity', f"{result['breakdown']['digital']}", '25', f"{(result['breakdown']['digital']/25)*100:.0f}%"],
+        ['Operational Efficiency', f"{result['breakdown']['operations']}", '25', f"{(result['breakdown']['operations']/25)*100:.0f}%"],
+    ]
+    
+    breakdown_table = Table(breakdown_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1*inch])
+    breakdown_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1f2937')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+    ]))
+    
+    story.append(breakdown_table)
+    story.append(Spacer(1, 30))
+    
+    # Advisory Section
+    story.append(Paragraph("Strategic Advisory & Recommendations", heading_style))
+    
+    # Clean up the advisory text and split into paragraphs
+    advisory_text = result.get('advisory', '')
+    advisory_paragraphs = advisory_text.split('\n')
+    
+    for para in advisory_paragraphs:
+        if para.strip():
+            if para.startswith('**') and para.endswith('**'):
+                # Bold headers
+                clean_para = para.strip('*')
+                story.append(Paragraph(f"<b>{clean_para}</b>", styles['Normal']))
+            elif para.startswith('•'):
+                # Bullet points
+                story.append(Paragraph(para, styles['Normal']))
+            else:
+                # Regular paragraphs
+                story.append(Paragraph(para, styles['Normal']))
+            story.append(Spacer(1, 6))
+    
+    story.append(Spacer(1, 30))
+    
+    # Next Steps and Contact Information
+    story.append(Paragraph("Ready to Take Action?", heading_style))
+    story.append(Paragraph("Based on your assessment results, BeamX Solutions can help you implement the strategic recommendations outlined above.", styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    story.append(Paragraph("<b>Contact Us:</b>", styles['Normal']))
+    story.append(Paragraph("🌐 Website: https://beamxsolutions.com", styles['Normal']))
+    story.append(Paragraph("📧 Email: info@beamxsolutions.com", styles['Normal']))
+    story.append(Paragraph("📞 Schedule a consultation: https://beamxsolutions.com/contact", styles['Normal']))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+# Function to send email with PDF attachment using Resend
+def send_email_with_resend(recipient_email: str, result: Dict, form_data: ScorecardInput) -> bool:
+    """Send assessment results via email with PDF attachment using Resend"""
+    if not resend_api_key:
+        logger.error("Resend API key not configured")
+        return False
+    
+    try:
+        # Generate PDF
+        pdf_buffer = generate_pdf_report(result, form_data)
+        pdf_content = pdf_buffer.read()
+        pdf_base64 = base64.b64encode(pdf_content).decode()
+        
+        # Create email content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #1f2937; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; background-color: #f9f9f9; }}
+                .score-box {{ background-color: #e5f3ff; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                .breakdown {{ background-color: white; padding: 15px; margin: 10px 0; border-left: 4px solid #3b82f6; }}
+                .footer {{ background-color: #1f2937; color: white; padding: 20px; text-align: center; }}
+                .cta-button {{ 
+                    display: inline-block; 
+                    background-color: #3b82f6; 
+                    color: white; 
+                    padding: 12px 24px; 
+                    text-decoration: none; 
+                    border-radius: 5px; 
+                    margin: 10px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Your Business Assessment Results</h1>
+                    <p>BeamX Solutions</p>
+                </div>
+                
+                <div class="content">
+                    <p>Hello!</p>
+                    
+                    <p>Thank you for completing the BeamX Solutions Business Assessment. Your personalized results are ready!</p>
+                    
+                    <div class="score-box">
+                        <h2>Your Overall Score: {result['total_score']}/100</h2>
+                        <p><strong>Business Maturity Level: {result['label']}</strong></p>
+                    </div>
+                    
+                    <h3>Score Breakdown:</h3>
+                    <div class="breakdown">
+                        <p><strong>💰 Financial Health:</strong> {result['breakdown']['financial']}/25</p>
+                        <p><strong>📈 Growth Readiness:</strong> {result['breakdown']['growth']}/25</p>
+                        <p><strong>💻 Digital Maturity:</strong> {result['breakdown']['digital']}/25</p>
+                        <p><strong>⚙️ Operational Efficiency:</strong> {result['breakdown']['operations']}/25</p>
+                    </div>
+                    
+                    <p>📄 <strong>Your detailed assessment report is attached as a PDF</strong> with personalized recommendations and next steps.</p>
+                    
+                    <h3>What's Next?</h3>
+                    <p>Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses like yours overcome challenges like "{form_data.pain_point.lower()}" and achieve sustainable growth.</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="https://beamxsolutions.com/contact" class="cta-button">Schedule Your Free Consultation</a>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p><strong>BeamX Solutions</strong></p>
+                    <p>🌐 <a href="https://beamxsolutions.com" style="color: #60a5fa;">beamxsolutions.com</a></p>
+                    <p>📧 info@beamxsolutions.com</p>
+                    <hr style="border-color: #374151; margin: 20px 0;">
+                    <p style="font-size: 12px;">This email was generated from your business assessment at beamxsolutions.com/business-assessment</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Plain text version
+        text_content = f"""
+        Your Business Assessment Results - BeamX Solutions
+
+        Hello!
+
+        Thank you for completing the BeamX Solutions Business Assessment. Your results are ready!
+
+        Your Score: {result['total_score']}/100 ({result['label']})
+
+        Score Breakdown:
+        • Financial Health: {result['breakdown']['financial']}/25
+        • Growth Readiness: {result['breakdown']['growth']}/25
+        • Digital Maturity: {result['breakdown']['digital']}/25
+        • Operational Efficiency: {result['breakdown']['operations']}/25
+
+        Your detailed assessment report is attached as a PDF with personalized recommendations.
+
+        What's Next?
+        Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses overcome challenges and achieve sustainable growth.
+
+        Contact Us:
+        Website: https://beamxsolutions.com
+        Email: info@beamxsolutions.com
+        Schedule a consultation: https://beamxsolutions.com/contact
+
+        Best regards,
+        The BeamX Solutions Team
+
+        ---
+        This email was generated from your business assessment at https://beamxsolutions.com/business-assessment
+        """
+        
+        # Send email using Resend
+        params = {
+            "from": from_email,
+            "to": [recipient_email],
+            "subject": f"Your Business Assessment Results: {result['total_score']}/100 ({result['label']}) 📊",
+            "html": html_content,
+            "text": text_content,
+            "attachments": [
+                {
+                    "filename": "BeamX_Business_Assessment_Report.pdf",
+                    "content": pdf_base64
+                }
+            ]
+        }
+        
+        email_response = resend.Emails.send(params)
+        
+        logger.info(f"Email sent successfully via Resend to {recipient_email}, ID: {email_response.get('id', 'unknown')}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send email via Resend to {recipient_email}: {str(e)}")
+        return False
+
+# Scoring functions (unchanged from original)
 def score_financial_health(data: ScorecardInput) -> int:
     """Calculate financial health score (0-25 points)"""
     revenue_map = {
@@ -147,7 +421,6 @@ def score_financial_health(data: ScorecardInput) -> int:
         "$250K–$1M": 4, 
         "Over $1M": 5
     }
-    # Updated mapping name for consistency with new field name
     expenses_map = {
         "Unknown": 1, 
         "≤$1K": 2, 
@@ -158,16 +431,15 @@ def score_financial_health(data: ScorecardInput) -> int:
     
     revenue_score = revenue_map[data.revenue]
     profit_score = 1 if data.profit_margin_known == "Yes" else 0
-    expenses_score = expenses_map[data.monthly_expenses]  # Updated field reference
+    expenses_score = expenses_map[data.monthly_expenses]
     
     total_score = revenue_score + profit_score + expenses_score
-    max_score = 5 + 1 + 5  # 11 total possible points
+    max_score = 5 + 1 + 5
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Financial score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
-# Scoring function for growth readiness assessment
 def score_growth_readiness(data: ScorecardInput) -> int:
     """Calculate growth readiness score (0-25 points)"""
     retention_map = {
@@ -188,13 +460,12 @@ def score_growth_readiness(data: ScorecardInput) -> int:
     campaign_score = campaign_map[data.digital_campaigns]
     
     total_score = cac_score + retention_score + campaign_score
-    max_score = 1 + 5 + 5  # 11 total possible points
+    max_score = 1 + 5 + 5
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Growth score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
-# Scoring function for digital maturity assessment
 def score_digital_maturity(data: ScorecardInput) -> int:
     """Calculate digital maturity score (0-25 points)"""
     analytics_map = {
@@ -213,13 +484,12 @@ def score_digital_maturity(data: ScorecardInput) -> int:
     data_score = data_map[data.data_mgmt]
     
     total_score = analytics_score + crm_score + data_score
-    max_score = 5 + 1 + 5  # 11 total possible points
+    max_score = 5 + 1 + 5
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Digital score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
-# Scoring function for operational efficiency assessment
 def score_operational_efficiency(data: ScorecardInput) -> int:
     """Calculate operational efficiency score (0-25 points)"""
     sop_map = {
@@ -234,14 +504,13 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
         "11–50": 4, 
         "50+": 5
     }
-    # Updated pain point scoring with new options
     pain_map = {
         "Not growing": 1, 
         "Systems are chaotic": 2, 
         "Don't know what to optimize": 3,
-        "Need to reduce cost": 3,  # New option
+        "Need to reduce cost": 3,
         "Need funding": 4, 
-        "Need more clients/customers": 4,  # New option
+        "Need more clients/customers": 4,
         "Growing fast, need structure": 5
     }
     
@@ -250,13 +519,13 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
     pain_score = pain_map[data.pain_point]
     
     total_score = sop_score + team_score + pain_score
-    max_score = 5 + 5 + 5  # 15 total possible points
+    max_score = 5 + 5 + 5
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Operations score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
 
-# GPT-5 advisory generation function
+# GPT-5 advisory generation function (unchanged from original)
 async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, int]) -> str:
     """Generate advisory using GPT-5 with proper parameters"""
     
@@ -294,15 +563,13 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     - NEVER use hyphens (-) for emphasis or connecting ideas
     - Instead of dashes, use words like "and", "while", "to", or rephrase sentences completely
     - Use commas, periods, and conjunctions instead of any type of dash
-    - Example: Instead of "lead-to-close" write "lead to close" or "conversion process"
-    - Example: Instead of "ROI—implement" write "ROI. Implement" or "ROI by implementing"
     """
     
     try:
         logger.info("Calling GPT-5 API for advisory generation")
         
         response = client.chat.completions.create(
-            model="gpt-5",  # Using GPT-5 model
+            model="gpt-5",
             messages=[
                 {
                     "role": "system", 
@@ -313,9 +580,9 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
                     "content": prompt
                 }
             ],
-            max_completion_tokens=400,  # Token limit for response
-            verbosity="medium",         # GPT-5 specific parameter
-            reasoning_effort="minimal"  # GPT-5 specific parameter for faster response
+            max_completion_tokens=400,
+            verbosity="medium",
+            reasoning_effort="minimal"
         )
         
         advisory = response.choices[0].message.content.strip()
@@ -345,7 +612,7 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
         
         return fallback_advisory
 
-# Main API endpoint for generating scorecard reports
+# Main API endpoint for generating scorecard reports (unchanged)
 @app.post("/generate-report")
 async def generate_report(input_data: ScorecardInput):
     """Generate comprehensive business scorecard report"""
@@ -391,11 +658,10 @@ async def generate_report(input_data: ScorecardInput):
         try:
             logger.info("Saving assessment to Supabase")
             
-            # Updated database structure to match new field names
             supabase_data = {
                 "revenue": input_data.revenue,
                 "profit_margin_known": input_data.profit_margin_known,
-                "monthly_expenses": input_data.monthly_expenses,  # Updated field name
+                "monthly_expenses": input_data.monthly_expenses,
                 "cac_tracked": input_data.cac_tracked,
                 "retention_rate": input_data.retention_rate,
                 "digital_campaigns": input_data.digital_campaigns,
@@ -448,6 +714,56 @@ async def generate_report(input_data: ScorecardInput):
             detail=f"An unexpected error occurred while generating the report: {str(e)}"
         )
 
+# New endpoint for emailing results using Resend
+@app.post("/email-results")
+async def email_results(email_request: EmailRequest):
+    """Send assessment results via email using Resend"""
+    
+    logger.info(f"Sending email via Resend to {email_request.email}")
+    
+    try:
+        # Send email with PDF attachment using Resend
+        success = send_email_with_resend(
+            email_request.email,
+            email_request.result,
+            email_request.formData
+        )
+        
+        if success:
+            # Log the email send to Supabase
+            try:
+                supabase.table("email_logs").insert({
+                    "recipient_email": email_request.email,
+                    "total_score": email_request.result.get("total_score"),
+                    "label": email_request.result.get("label"),
+                    "industry": email_request.formData.industry,
+                    "sent_at": datetime.datetime.utcnow().isoformat(),
+                    "email_provider": "resend"
+                }).execute()
+                logger.info(f"Email send logged to database for {email_request.email}")
+            except Exception as e:
+                logger.warning(f"Failed to log email send to database: {e}")
+            
+            return {
+                "status": "success", 
+                "message": "Email sent successfully via Resend",
+                "provider": "resend"
+            }
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to send email via Resend"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in email_results: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while sending email: {str(e)}"
+        )
+
 # Health check endpoint for monitoring
 @app.get("/health")
 async def health_check():
@@ -456,7 +772,9 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "model": "gpt-5",
-        "version": "2.0.0"
+        "version": "2.1.0",
+        "email_provider": "resend" if resend_api_key else None,
+        "email_configured": bool(resend_api_key)
     }
 
 # Application entry point
