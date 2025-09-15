@@ -263,7 +263,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     story.append(Paragraph("<b>Contact Us:</b>", styles['Normal']))
     story.append(Paragraph("🌐 Website: https://beamxsolutions.com", styles['Normal']))
     story.append(Paragraph("📧 Email: info@beamxsolutions.com", styles['Normal']))
-    story.append(Paragraph("📞 Schedule a consultation: https://beamxsolutions.com/contact", styles['Normal']))
+    story.append(Paragraph("📞 Schedule a consultation: https://calendly.com/beamxsolutions", styles['Normal']))
     
     # Build PDF
     doc.build(story)
@@ -317,7 +317,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                 <div class="content">
                     <p>Hello!</p>
                     
-                    <p>Thank you for completing the BeamX Solutions Business Assessment. Your personalized results are ready!</p>
+                    <p>Thank you for completing the BeamX Solutions Business Assessment. Your tailored results are ready!</p>
                     
                     <div class="score-box">
                         <h2>Your Overall Score: {result['total_score']}/100</h2>
@@ -338,7 +338,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                     <p>Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses like yours overcome challenges like "{form_data.pain_point.lower()}" and achieve sustainable growth.</p>
                     
                     <div style="text-align: center;">
-                        <a href="https://beamxsolutions.com/contact" class="cta-button">Schedule Your Free Consultation</a>
+                        <a href="https://calendly.com/beamxsolutions" class="cta-button">Schedule Your Free Consultation</a>
                     </div>
                 </div>
                 
@@ -347,7 +347,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                     <p>🌐 <a href="https://beamxsolutions.com" style="color: #60a5fa;">beamxsolutions.com</a></p>
                     <p>📧 info@beamxsolutions.com</p>
                     <hr style="border-color: #374151; margin: 20px 0;">
-                    <p style="font-size: 12px;">This email was generated from your business assessment at beamxsolutions.com/business-assessment</p>
+                    <p style="font-size: 12px;">This email was generated from your business assessment at beamxsolutions.com/tools/business-assessment</p>
                 </div>
             </div>
         </body>
@@ -389,16 +389,16 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
         
         # Send email using Resend
         params = {
-            "from": from_email,
+            "from": f"BeamX Solutions <{from_email}>",
             "to": [recipient_email],
             "subject": f"Your Business Assessment Results: {result['total_score']}/100 ({result['label']}) 📊",
             "html": html_content,
             "text": text_content,
             "attachments": [
-                {
-                    "filename": "BeamX_Business_Assessment_Report.pdf",
-                    "content": pdf_base64
-                }
+            {
+                "filename": "BeamX_Business_Assessment_Report.pdf",
+                "content": pdf_base64
+            }
             ]
         }
         
