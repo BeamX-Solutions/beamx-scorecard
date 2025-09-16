@@ -88,7 +88,8 @@ class ScorecardInput(BaseModel):
     
     monthly_expenses: Literal[
         "Unknown", 
-        "≤$1K", 
+        "≤$500",
+        "$500–$1K",
         "$1K–$5K", 
         "$5K–$20K", 
         "$20K+"
@@ -423,10 +424,11 @@ def score_financial_health(data: ScorecardInput) -> int:
     }
     expenses_map = {
         "Unknown": 1, 
-        "≤$1K": 2, 
-        "$1K–$5K": 3, 
-        "$5K–$20K": 4, 
-        "$20K+": 5
+        "≤$500": 2,
+        "$500–$1K": 3,
+        "$1K–$5K": 4, 
+        "$5K–$20K": 5,
+        "$20K+": 6
     }
     
     revenue_score = revenue_map[data.revenue]
@@ -434,7 +436,7 @@ def score_financial_health(data: ScorecardInput) -> int:
     expenses_score = expenses_map[data.monthly_expenses]
     
     total_score = revenue_score + profit_score + expenses_score
-    max_score = 5 + 1 + 5
+    max_score = 5 + 1 + 6
     
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Financial score: {normalized_score}/25 (raw: {total_score}/{max_score})")
