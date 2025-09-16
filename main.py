@@ -378,7 +378,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
         Contact Us:
         Website: https://beamxsolutions.com
         Email: info@beamxsolutions.com
-        Schedule a consultation: https://beamxsolutions.com/contact
+        Schedule a consultation: https://calendly.com/beamxsolutions
 
         Best regards,
         The BeamX Solutions Team
