@@ -298,7 +298,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
             </style>
             <![endif]-->
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, Helvetica, sans-serif;">
+        <body style="margin: 0; padding: 0; background-color: white; font-family: Arial, Helvetica, sans-serif;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
                 <tr>
                     <td align="center" style="padding: 20px 0;">
@@ -307,8 +307,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                             <!-- Header -->
                             <tr>
                                 <td style="background-color: #02428e; padding: 40px 20px; text-align: center;">
-                                    <!-- Logo - Replace YOUR_LOGO_URL_HERE with actual hosted logo URL -->
-                                    <img src="YOUR_LOGO_URL_HERE" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
+                                    <img src="https://beamxsolutions.com/public/asset-1-1.svg" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
                                     <h1 style="color: #ffffff; font-size: 36px; font-weight: 600; margin: 0; line-height: 48px; font-family: Arial, Helvetica, sans-serif;">
                                         Your Business<br>Assessment Results
                                     </h1>
@@ -337,7 +336,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     <table width="347" cellpadding="28" cellspacing="0" style="background-color: #008bd8; border-radius: 8px;">
                                         <tr>
                                             <td>
-                                                <p style="color: #ffffff; font-size: 24px; font-weight: 700; line-height: 32px; margin: 0;">
+                                                <p style="color: #ffffff; font-size: 20px; font-weight: 700; line-height: 30px; margin: 0;">
                                                     Your Overall Score: {result['total_score']}/100
                                                 </p>
                                                 <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; line-height: 32px;">
@@ -378,7 +377,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                                 
                                                 <!-- Operational Efficiency -->
                                                 <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
-                                                    <span style="font-weight: 600;">⚙️ Operational Efficiency:</span> {result['breakdown']['operations']}/25
+                                                    <span style="font-weight: 600; background: #F27900;">⚙️ Operational Efficiency:</span> {result['breakdown']['operations']}/25
                                                 </p>
                                             </td>
                                         </tr>
@@ -469,7 +468,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </p>
                                     
                                     <p style="color: #ffffff; font-size: 14px; line-height: 20px; margin: 0 0 32px 0;">
-                                        This email was generated from your business assessment at 
+                                        This email was generated from your business assessment <br>at 
                                         <a href="https://beamxsolutions.com/tools/business-assessment" style="color: #ffffff; text-decoration: underline;">beamxsolutions.com/tools/business-assessment</a>
                                     </p>
                                     
