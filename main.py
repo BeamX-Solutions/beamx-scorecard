@@ -284,7 +284,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
         pdf_content = pdf_buffer.read()
         pdf_base64 = base64.b64encode(pdf_content).decode()
         
-        # Create email content
+        # Create email content - optimized for email clients
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -292,402 +292,197 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>BeamX Solutions - Business Assessment Results</title>
-            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;600;700&display=swap" rel="stylesheet">
-            <style>
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
-
-                body {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    background-color: #f5f5f5;
-                    display: flex;
-                    justify-content: center;
-                    min-height: 100vh;
-                }}
-
-                .container {{
-                    width: 600px;
-                    background-color: #f5f5f5;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 28px;
-                }}
-
-                .header {{
-                    width: 100%;
-                    background-color: #02428e;
-                    padding: 40px 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 24px;
-                }}
-
-                .logo {{
-                    width: 112px;
-                    height: 50px;
-                }}
-
-                .header h1 {{
-                    font-family: 'Poppins', Helvetica, sans-serif;
-                    font-weight: 600;
-                    color: white;
-                    font-size: 36px;
-                    text-align: center;
-                    line-height: 48px;
-                    margin: 0;
-                }}
-
-                .section {{
-                    width: 540px;
-                }}
-
-                .section p {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 400;
-                    color: #1d1d1b;
-                    font-size: 14px;
-                    line-height: 20px;
-                }}
-
-                .score-card {{
-                    width: 347px;
-                    background-color: #008bd8;
-                    border-radius: 8px;
-                    padding: 28px;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                }}
-
-                .score-card-content {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-size: 24px;
-                    line-height: 24px;
-                }}
-
-                .score-card-content .score {{
-                    font-weight: 700;
-                    color: white;
-                    font-size: 24px;
-                    line-height: 32px;
-                }}
-
-                .score-card-content .level-label {{
-                    font-weight: 700;
-                    color: white;
-                    font-size: 16px;
-                    line-height: 32px;
-                }}
-
-                .score-card-content .level-value {{
-                    font-weight: 500;
-                    color: white;
-                    font-size: 16px;
-                    line-height: 32px;
-                }}
-
-                .breakdown-card {{
-                    width: 540px;
-                    background-color: white;
-                    border-radius: 8px;
-                    padding: 20px;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                }}
-
-                .breakdown-card h2 {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 700;
-                    color: #008bd8;
-                    font-size: 16px;
-                    line-height: 20px;
-                    margin-bottom: 24px;
-                }}
-
-                .breakdown-items {{
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }}
-
-                .breakdown-item {{
-                    display: flex;
-                    align-items: center;
-                    gap: 7px;
-                }}
-
-                .breakdown-item img {{
-                    width: 16px;
-                    height: 16px;
-                }}
-
-                .breakdown-item-text {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-size: 14px;
-                    line-height: 20px;
-                    color: #1d1d1b;
-                    white-space: nowrap;
-                }}
-
-                .breakdown-item-text .label {{
-                    font-weight: 600;
-                }}
-
-                .breakdown-item-text .score {{
-                    font-weight: 400;
-                }}
-
-                .section-title {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 700;
-                    color: #008bd8;
-                    font-size: 16px;
-                    line-height: 20px;
-                }}
-
-                .cta-button {{
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 10px;
-                    background-color: #f27900;
-                    border-radius: 8px;
-                    border: none;
-                    cursor: pointer;
-                    transition: background-color 0.3s;
-                    text-decoration: none;
-                }}
-
-                .cta-button:hover {{
-                    background-color: #d96d00;
-                }}
-
-                .cta-button span {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 600;
-                    color: white;
-                    font-size: 14px;
-                    text-align: center;
-                    line-height: 20px;
-                    white-space: nowrap;
-                }}
-
-                .footer {{
-                    width: 100%;
-                    background-color: #02428e;
-                    padding: 24px 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 32px;
-                }}
-
-                .social-section {{
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 16px;
-                }}
-
-                .social-section p {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 400;
-                    color: white;
-                    font-size: 14px;
-                    text-align: center;
-                    letter-spacing: 0.1px;
-                    line-height: 20px;
-                }}
-
-                .social-icons {{
-                    display: flex;
-                    align-items: center;
-                    gap: 32px;
-                    height: 24px;
-                }}
-
-                .social-icons img {{
-                    width: 24px;
-                    height: 24px;
-                    cursor: pointer;
-                }}
-
-                .footer-text {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 400;
-                    color: white;
-                    font-size: 14px;
-                    text-align: center;
-                    letter-spacing: 0.1px;
-                    line-height: 20px;
-                }}
-
-                .footer-link {{
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 600;
-                    color: white;
-                    text-decoration: underline;
-                }}
-
-                .footer-description {{
-                    width: 538px;
-                    font-family: 'Roboto', Helvetica, sans-serif;
-                    font-weight: 400;
-                    color: white;
-                    font-size: 14px;
-                    text-align: center;
-                    line-height: 20px;
-                }}
-
-                .copyright {{
-                    width: 600px;
-                    font-family: 'Poppins', Helvetica, sans-serif;
-                    font-weight: 400;
-                    color: #008bd8;
-                    font-size: 14px;
-                    text-align: center;
-                    letter-spacing: 0.1px;
-                    line-height: 22px;
-                }}
-
-                a {{
-                    color: inherit;
-                    text-decoration: inherit;
-                }}
+            <!--[if mso]>
+            <style type="text/css">
+                body, table, td {{font-family: Arial, sans-serif !important;}}
             </style>
+            <![endif]-->
         </head>
-        <body>
-            <div class="container">
-                <!-- Header -->
-                <header class="header">
-                    <!-- Replace the src with your local logo path -->
-                    <img class="logo" alt="BeamX Solutions Logo" src="YOUR_LOGO_PATH_HERE.svg">
-                    <h1>Your Business<br>Assessment Results</h1>
-                </header>
-
-                <!-- Introduction -->
-                <section class="section">
-                    <p>
-                        Hello!<br><br>
-                        Thank you for completing the BeamX Solutions Business Assessment. Your tailored results are ready!
-                    </p>
-                </section>
-
-                <!-- Score Card -->
-                <div class="score-card">
-                    <div class="score-card-content">
-                        <span class="score">Your Overall Score: {result['total_score']}/100<br></span>
-                        <span class="level-label">Business Maturity Level:</span>
-                        <span class="level-value"> {result['label']}</span>
-                    </div>
-                </div>
-
-                <!-- Score Breakdown -->
-                <div class="breakdown-card">
-                    <h2>Score Breakdown</h2>
-                    <div class="breakdown-items">
-                        <div class="breakdown-item">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 5.33333H10C10.1768 5.33333 10.3464 5.26309 10.4714 5.13807C10.5964 5.01304 10.6667 4.84347 10.6667 4.66666C10.6667 4.48985 10.5964 4.32028 10.4714 4.19526C10.3464 4.07023 10.1768 3.99999 10 3.99999H6C5.82319 3.99999 5.65362 4.07023 5.5286 4.19526C5.40357 4.32028 5.33333 4.48985 5.33333 4.66666C5.33333 4.84347 5.40357 5.01304 5.5286 5.13807C5.65362 5.26309 5.82319 5.33333 6 5.33333ZM6.31333 2.99999C6.32316 3.0813 6.36257 3.15614 6.42405 3.21024C6.48553 3.26434 6.56477 3.29392 6.64667 3.29333H9.33333C9.41483 3.2925 9.49331 3.26243 9.5545 3.20859C9.61568 3.15475 9.65549 3.08072 9.66667 2.99999C9.81326 2.29135 10.0841 1.61425 10.4667 0.999995C10.502 0.940405 10.5166 0.870792 10.5081 0.802038C10.4997 0.733285 10.4687 0.669267 10.42 0.619995C10.3798 0.567031 10.3247 0.527303 10.2617 0.505919C10.1987 0.484535 10.1308 0.482472 10.0667 0.499995L8.82667 1.03333C8.80588 1.04337 8.78309 1.04858 8.76 1.04858C8.73691 1.04858 8.71412 1.04337 8.69333 1.03333C8.65198 1.01793 8.61841 0.986767 8.6 0.946661L8.30667 0.206661C8.28105 0.146531 8.23832 0.0952587 8.1838 0.0592201C8.12928 0.0231815 8.06536 0.00396729 8 0.00396729C7.93464 0.00396729 7.87073 0.0231815 7.8162 0.0592201C7.76168 0.0952587 7.71895 0.146531 7.69333 0.206661L7.4 0.946661C7.38159 0.986767 7.34802 1.01793 7.30667 1.03333C7.28588 1.04337 7.26309 1.04858 7.24 1.04858C7.21691 1.04858 7.19412 1.04337 7.17333 1.03333L5.93333 0.499995C5.86975 0.474275 5.79978 0.468797 5.73297 0.484307C5.66615 0.499817 5.60575 0.53556 5.56 0.586661C5.51131 0.635934 5.48032 0.699951 5.47188 0.768705C5.46344 0.837458 5.47801 0.907072 5.51333 0.966661C5.89956 1.59109 6.17052 2.2798 6.31333 2.99999ZM10.2933 6.07999C10.2246 6.02717 10.14 5.999 10.0533 5.99999H5.94667C5.85996 5.999 5.77543 6.02717 5.70667 6.07999C4.00667 7.41333 2.10667 9.68 2.10667 11.68C2.10667 14.5 3.68 16 8 16C12.32 16 13.8933 14.5 13.8933 11.68C13.8933 9.68 12 7.37999 10.2933 6.07999ZM8.66667 13.42C8.6278 13.4276 8.59272 13.4483 8.56724 13.4786C8.54177 13.5089 8.52745 13.5471 8.52667 13.5867V13.8333C8.52667 13.9659 8.47399 14.0931 8.38022 14.1869C8.28645 14.2807 8.15928 14.3333 8.02667 14.3333C7.89406 14.3333 7.76688 14.2807 7.67311 14.1869C7.57935 14.0931 7.52667 13.9659 7.52667 13.8333V13.62C7.52667 13.5758 7.50911 13.5334 7.47785 13.5021C7.4466 13.4709 7.4042 13.4533 7.36 13.4533H6.96667C6.83406 13.4533 6.70688 13.4007 6.61311 13.3069C6.51935 13.2131 6.46667 13.0859 6.46667 12.9533C6.46667 12.8207 6.51935 12.6935 6.61311 12.5998C6.70688 12.506 6.83406 12.4533 6.96667 12.4533H8.4C8.50641 12.457 8.61062 12.4225 8.69387 12.3561C8.77711 12.2898 8.8339 12.1958 8.85401 12.0913C8.87411 11.9867 8.85621 11.8784 8.80353 11.7859C8.75084 11.6934 8.66684 11.6227 8.56667 11.5867L7.11333 11.0067C6.82042 10.8969 6.57119 10.6948 6.40334 10.4309C6.23548 10.167 6.15814 9.85554 6.18299 9.54374C6.20785 9.23193 6.33355 8.9367 6.54109 8.70268C6.74864 8.46867 7.02673 8.30859 7.33333 8.24666C7.3722 8.23905 7.40729 8.21837 7.43276 8.18804C7.45823 8.15772 7.47255 8.11959 7.47333 8.07999V7.83333C7.47333 7.70072 7.52601 7.57354 7.61978 7.47977C7.71355 7.38601 7.84073 7.33333 7.97333 7.33333C8.10594 7.33333 8.23312 7.38601 8.32689 7.47977C8.42065 7.57354 8.47333 7.70072 8.47333 7.83333V8.04666C8.47333 8.09086 8.49089 8.13326 8.52215 8.16451C8.5534 8.19577 8.5958 8.21333 8.64 8.21333H9.03333C9.16594 8.21333 9.29312 8.26601 9.38689 8.35977C9.48066 8.45354 9.53333 8.58072 9.53333 8.71333C9.53333 8.84594 9.48066 8.97311 9.38689 9.06688C9.29312 9.16065 9.16594 9.21333 9.03333 9.21333H7.62667C7.52026 9.20966 7.41604 9.24413 7.3328 9.31051C7.24956 9.37689 7.19277 9.47082 7.17266 9.57538C7.15255 9.67993 7.17046 9.78823 7.22314 9.88075C7.27582 9.97327 7.35982 10.0439 7.46 10.08L8.91333 10.66C9.20616 10.7719 9.45446 10.9764 9.62052 11.2423C9.78658 11.5082 9.86133 11.821 9.83343 12.1332C9.80552 12.4455 9.67648 12.7401 9.4659 12.9723C9.25532 13.2046 8.9747 13.3618 8.66667 13.42Z" fill="#F27900"/>
-                            </svg>
-                            <div class="breakdown-item-text">
-                                <span class="label">Financial Health:</span>
-                                <span class="score"> {result['breakdown']['financial']}/25</span>
-                            </div>
-                        </div>
-                        <div class="breakdown-item">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.343 3.95399C13.2093 4.00196 13.0647 4.01098 12.9261 3.98C12.7875 3.94902 12.6606 3.87931 12.56 3.77899L12.008 3.22599L7.811 7.42299C7.74135 7.49269 7.65865 7.54798 7.56762 7.5857C7.4766 7.62342 7.37903 7.64283 7.2805 7.64283C7.18197 7.64283 7.0844 7.62342 6.99338 7.5857C6.90235 7.54798 6.81965 7.49269 6.75 7.42299L5.149 5.82199L1.335 9.63599C1.26578 9.70759 1.183 9.76469 1.09148 9.80395C0.999954 9.84321 0.90153 9.86386 0.801945 9.86468C0.702361 9.86549 0.60361 9.84647 0.511456 9.80872C0.419302 9.77096 0.33559 9.71523 0.265204 9.64478C0.194818 9.57433 0.139168 9.49056 0.101501 9.39837C0.0638333 9.30618 0.0449035 9.20742 0.0458154 9.10783C0.0467274 9.00825 0.067463 8.90984 0.106812 8.81836C0.146162 8.72688 0.203337 8.64415 0.275001 8.57499L4.617 4.22999C4.68665 4.1603 4.76935 4.10501 4.86038 4.06729C4.9514 4.02957 5.04897 4.01015 5.1475 4.01015C5.24603 4.01015 5.3436 4.02957 5.43462 4.06729C5.52565 4.10501 5.60835 4.1603 5.678 4.22999L7.28 5.83199L10.947 2.16499L10.395 1.61299C10.2945 1.5126 10.2245 1.38572 10.1933 1.24712C10.1621 1.10852 10.1709 0.963911 10.2187 0.830117C10.2665 0.696322 10.3513 0.578849 10.4632 0.491372C10.5751 0.403895 10.7096 0.350011 10.851 0.335994C11.764 0.245994 12.289 0.245994 13.168 0.335994C13.3395 0.353731 13.4997 0.430045 13.6216 0.552083C13.7434 0.67412 13.8195 0.834424 13.837 1.00599C13.928 1.88399 13.927 2.40999 13.837 3.32199C13.8229 3.4633 13.769 3.59771 13.6816 3.70959C13.5941 3.82147 13.4767 3.90622 13.343 3.95399ZM11.72 5.46199C11.8333 5.35212 11.9784 5.28079 12.1346 5.25817C12.2908 5.23555 12.4502 5.26278 12.59 5.33599L13.562 5.84599C13.6878 5.91219 13.7921 6.01275 13.863 6.13597C13.9338 6.25919 13.9681 6.4 13.962 6.54199L13.686 13.13C13.678 13.3235 13.5955 13.5064 13.4557 13.6404C13.3159 13.7744 13.1297 13.8492 12.936 13.849H10.964C10.8977 13.849 10.8341 13.8227 10.7872 13.7758C10.7403 13.7289 10.714 13.6653 10.714 13.599V6.54299C10.7139 6.50943 10.7206 6.47619 10.7337 6.44526C10.7467 6.41434 10.7659 6.38636 10.79 6.36299L11.72 5.46199ZM9.464 13.599C9.464 13.6653 9.43766 13.7289 9.39078 13.7758C9.34389 13.8227 9.2803 13.849 9.214 13.849H5.464C5.3977 13.849 5.33411 13.8227 5.28722 13.7758C5.24034 13.7289 5.214 13.6653 5.214 13.599V7.78499C5.214 7.76499 5.229 7.74899 5.249 7.75099C5.412 7.75899 5.572 7.82099 5.704 7.93599L7.349 9.37999C7.39617 9.42151 7.45725 9.44374 7.52006 9.44225C7.58288 9.44077 7.64284 9.41569 7.688 9.37199L9.04 8.05999C9.0753 8.02578 9.11989 8.00273 9.16822 7.99373C9.21654 7.98473 9.26645 7.99017 9.3117 8.00938C9.35694 8.02859 9.39552 8.06071 9.42261 8.10173C9.4497 8.14275 9.4641 8.19084 9.464 8.23999V13.599ZM3.535 9.13599L0.425001 12.312C0.287359 12.4521 0.210163 12.6406 0.210001 12.837V13.099C0.210001 13.513 0.546001 13.849 0.960001 13.849H3.714C3.78031 13.849 3.84389 13.8227 3.89078 13.7758C3.93766 13.7289 3.964 13.6653 3.964 13.599V9.31099C3.9641 9.26124 3.94934 9.21259 3.92163 9.17126C3.89391 9.12994 3.8545 9.09783 3.80843 9.07904C3.76236 9.06024 3.71173 9.05562 3.66302 9.06577C3.61431 9.07592 3.56974 9.10037 3.535 9.13599Z" fill="#F27900"/>
-                            </svg>
-                            <div class="breakdown-item-text">
-                                <span class="label">Growth Readiness:</span>
-                                <span class="score"> {result['breakdown']['growth']}/25</span>
-                            </div>
-                        </div>
-                        <div class="breakdown-item">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 12.6667C14.1699 12.6669 14.3334 12.7319 14.4569 12.8486C14.5805 12.9652 14.6548 13.1247 14.6648 13.2943C14.6747 13.4639 14.6196 13.6309 14.5105 13.7612C14.4014 13.8915 14.2467 13.9753 14.078 13.9954L14 14H2C1.83008 13.9998 1.66665 13.9348 1.54309 13.8181C1.41953 13.7015 1.34518 13.5421 1.33522 13.3724C1.32526 13.2028 1.38045 13.0358 1.48951 12.9055C1.59857 12.7752 1.75327 12.6914 1.922 12.6714L2 12.6667H14ZM12.6667 2.66669C13.0031 2.66658 13.327 2.79362 13.5737 3.02235C13.8204 3.25108 13.9714 3.56458 13.9967 3.90002L14 4.00002V10.6667C14.0001 11.0031 13.8731 11.3271 13.6443 11.5737C13.4156 11.8204 13.1021 11.9715 12.7667 11.9967L12.6667 12H3.33333C2.99695 12.0001 2.67296 11.8731 2.4263 11.6444C2.17965 11.4156 2.02856 11.1021 2.00333 10.7667L2 10.6667V4.00002C1.99989 3.66364 2.12694 3.33964 2.35566 3.09299C2.58439 2.84633 2.8979 2.69525 3.23333 2.67002L3.33333 2.66669H12.6667Z" fill="#F27900"/>
-                            </svg>
-                            <div class="breakdown-item-text">
-                                <span class="label">Digital Maturity:</span>
-                                <span class="score"> {result['breakdown']['digital']}/25</span>
-                            </div>
-                        </div>
-                        <div class="breakdown-item">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6.5 0C6.10218 0 5.72065 0.158035 5.43934 0.43934C5.15804 0.720644 5 1.10218 5 1.5V2.804L3.87 2.152C3.52557 1.95341 3.11639 1.89969 2.73238 2.00263C2.34836 2.10557 2.02092 2.35676 1.822 2.701L0.322001 5.299C0.223358 5.46963 0.159309 5.65803 0.133515 5.85343C0.10772 6.04882 0.120687 6.24739 0.171672 6.43777C0.222658 6.62815 0.310663 6.80662 0.430658 6.96298C0.550653 7.11933 0.700285 7.2505 0.871001 7.349L2 8L0.870001 8.652C0.526102 8.85125 0.275339 9.17884 0.172779 9.56283C0.0702192 9.94682 0.124248 10.3558 0.323001 10.7L1.823 13.298C1.92141 13.4687 2.05248 13.6183 2.20872 13.7383C2.36496 13.8583 2.5433 13.9463 2.73358 13.9974C2.92385 14.0485 3.12232 14.0616 3.31765 14.0359C3.51298 14.0103 3.70135 13.9464 3.872 13.848L5 13.195V14.5C5 14.8978 5.15804 15.2794 5.43934 15.5607C5.72065 15.842 6.10218 16 6.5 16H9.5C9.89783 16 10.2794 15.842 10.5607 15.5607C10.842 15.2794 11 14.8978 11 14.5V13.196L12.13 13.848C12.4744 14.0466 12.8836 14.1003 13.2676 13.9974C13.6516 13.8944 13.9791 13.6432 14.178 13.299L15.678 10.701C15.7766 10.5304 15.8407 10.342 15.8665 10.1466C15.8923 9.95118 15.8793 9.75261 15.8283 9.56223C15.7773 9.37185 15.6893 9.19338 15.5693 9.03702C15.4493 8.88067 15.2997 8.7495 15.129 8.651L14 8L15.13 7.348C15.4743 7.14891 15.7255 6.82122 15.8283 6.43697C15.931 6.05273 15.877 5.6434 15.678 5.299L14.178 2.701C14.0796 2.53033 13.9485 2.38072 13.7923 2.26071C13.636 2.14071 13.4577 2.05265 13.2674 2.00158C13.0772 1.9505 12.8787 1.93741 12.6834 1.96305C12.488 1.98869 12.2996 2.05255 12.129 2.151L11 2.805V1.5C11 1.10218 10.842 0.720644 10.5607 0.43934C10.2794 0.158035 9.89783 0 9.5 0L6.5 0ZM8 10C7.46957 10 6.96086 9.78929 6.58579 9.41421C6.21071 9.03914 6 8.53043 6 8C6 7.46957 6.21071 6.96086 6.58579 6.58579C6.96086 6.21071 7.46957 6 8 6C8.53043 6 9.03914 6.21071 9.41421 6.58579C9.78929 6.96086 10 7.46957 10 8C10 8.53043 9.78929 9.03914 9.41421 9.41421C9.03914 9.78929 8.53043 10 8 10Z" fill="#F27900"/>
-                            </svg>
-                            <div class="breakdown-item-text">
-                                <span class="label">Operational Efficiency:</span>
-                                <span class="score"> {result['breakdown']['operations']}/25</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Information -->
-                <section class="section">
-                    <p>
-                        Your detailed assessment report is attached as a PDF with personalized recommendations and next steps.
-                    </p>
-                </section>
-
-                <!-- What's Next Section -->
-                <section class="section">
-                    <h2 class="section-title">What's Next?</h2>
-                </section>
-
-                <section class="section">
-                    <p>
-                        Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses like yours overcome challenges like "{form_data.pain_point.lower()}" and achieve sustainable growth.
-                    </p>
-                </section>
-
-                <!-- CTA Button -->
-                <a href="https://calendly.com/beamxsolutions" class="cta-button">
-                    <span>Schedule Your Free Consultation</span>
-                </a>
-
-                <!-- Footer -->
-                <footer class="footer">
-                    <div class="social-section">
-                        <p>Follow us on</p>
-                        <nav class="social-icons">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M18 2H15C13.6739 2 12.4021 2.52678 11.4645 3.46447C10.5268 4.40215 10 5.67392 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.73478 14.1054 6.48043 14.2929 6.29289C14.4804 6.10536 14.7348 6 15 6H18V2Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17 2H7C4.23858 2 2 4.23858 2 7V17C2 19.7614 4.23858 22 7 22H17C19.7614 22 22 19.7614 22 17V7C22 4.23858 19.7614 2 17 2Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M16 11.37C16.1234 12.2022 15.9813 13.0522 15.5938 13.799C15.2063 14.5458 14.5932 15.1514 13.8416 15.5297C13.0901 15.9079 12.2385 16.0396 11.4078 15.9059C10.5771 15.7723 9.80977 15.3801 9.21485 14.7852C8.61993 14.1902 8.22774 13.4229 8.09408 12.5922C7.96042 11.7615 8.09208 10.9099 8.47034 10.1584C8.8486 9.40685 9.4542 8.79374 10.201 8.40624C10.9478 8.01874 11.7978 7.87658 12.63 8C13.4789 8.12588 14.2649 8.52146 14.8717 9.1283C15.4785 9.73515 15.8741 10.5211 16 11.37Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M17.5 6.5H17.51" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23 2.99998C22.0424 3.67546 20.9821 4.19209 19.86 4.52999C19.2577 3.8375 18.4573 3.34668 17.567 3.12391C16.6767 2.90115 15.7395 2.95718 14.8821 3.28444C14.0247 3.6117 13.2884 4.19439 12.773 4.9537C12.2575 5.71302 11.9877 6.61232 12 7.52998V8.52998C10.2426 8.57555 8.50127 8.1858 6.93101 7.39543C5.36074 6.60506 4.01032 5.43862 3 3.99998C3 3.99998 -1 13 8 17C5.94053 18.398 3.48716 19.0989 1 19C10 24 21 19 21 7.49998C20.9991 7.22144 20.9723 6.94358 20.92 6.66999C21.9406 5.66348 22.6608 4.3927 23 2.99998Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8V8Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M6 9H2V21H6V9Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="#F5F5F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </nav>
-                    </div>
-
-                    <div>
-                        <p class="footer-text">www.beamxsolutions.com</p>
-                    </div>
-
-                    <p class="footer-description">
-                        This email was generated from your business assessment at 
-                        <a href="http://beamxsolutions.com/tools/business-assessment" class="footer-link" target="_blank" rel="noopener noreferrer">
-                            beamxsolutions.com/tools/business-assessment
-                        </a>
-                    </p>
-
-                    <p class="copyright">Copyright © 2025 BeamXSolutions</p>
-                </footer>
-            </div>
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, Helvetica, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
+                <tr>
+                    <td align="center" style="padding: 20px 0;">
+                        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
+                            
+                            <!-- Header -->
+                            <tr>
+                                <td style="background-color: #02428e; padding: 40px 20px; text-align: center;">
+                                    <!-- Logo - Replace YOUR_LOGO_URL_HERE with actual hosted logo URL -->
+                                    <img src="YOUR_LOGO_URL_HERE" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
+                                    <h1 style="color: #ffffff; font-size: 36px; font-weight: 600; margin: 0; line-height: 48px; font-family: Arial, Helvetica, sans-serif;">
+                                        Your Business<br>Assessment Results
+                                    </h1>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- Introduction -->
+                            <tr>
+                                <td style="padding: 0 30px;">
+                                    <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
+                                        Hello!<br><br>
+                                        Thank you for completing the BeamX Solutions Business Assessment. Your tailored results are ready!
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- Score Card -->
+                            <tr>
+                                <td align="center">
+                                    <table width="347" cellpadding="28" cellspacing="0" style="background-color: #008bd8; border-radius: 8px;">
+                                        <tr>
+                                            <td>
+                                                <p style="color: #ffffff; font-size: 24px; font-weight: 700; line-height: 32px; margin: 0;">
+                                                    Your Overall Score: {result['total_score']}/100
+                                                </p>
+                                                <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; line-height: 32px;">
+                                                    <span style="font-weight: 700;">Business Maturity Level:</span>
+                                                    <span style="font-weight: 500;"> {result['label']}</span>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- Score Breakdown Card -->
+                            <tr>
+                                <td style="padding: 0 30px;">
+                                    <table width="100%" cellpadding="20" cellspacing="0" style="background-color: #ffffff; border-radius: 8px;">
+                                        <tr>
+                                            <td>
+                                                <h2 style="color: #008bd8; font-size: 16px; font-weight: 700; margin: 0 0 24px 0;">Score Breakdown</h2>
+                                                
+                                                <!-- Financial Health -->
+                                                <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
+                                                    <span style="font-weight: 600;">💰 Financial Health:</span> {result['breakdown']['financial']}/25
+                                                </p>
+                                                
+                                                <!-- Growth Readiness -->
+                                                <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
+                                                    <span style="font-weight: 600;">📈 Growth Readiness:</span> {result['breakdown']['growth']}/25
+                                                </p>
+                                                
+                                                <!-- Digital Maturity -->
+                                                <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
+                                                    <span style="font-weight: 600;">💻 Digital Maturity:</span> {result['breakdown']['digital']}/25
+                                                </p>
+                                                
+                                                <!-- Operational Efficiency -->
+                                                <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
+                                                    <span style="font-weight: 600;">⚙️ Operational Efficiency:</span> {result['breakdown']['operations']}/25
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- PDF Info -->
+                            <tr>
+                                <td style="padding: 0 30px;">
+                                    <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
+                                        Your detailed assessment report is attached as a PDF with personalized recommendations and next steps.
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- What's Next Title -->
+                            <tr>
+                                <td style="padding: 0 30px;">
+                                    <h2 style="color: #008bd8; font-size: 16px; font-weight: 700; margin: 0;">What's Next?</h2>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- What's Next Content -->
+                            <tr>
+                                <td style="padding: 0 30px;">
+                                    <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
+                                        Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses like yours overcome challenges like "{form_data.pain_point.lower()}" and achieve sustainable growth.
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- CTA Button -->
+                            <tr>
+                                <td align="center">
+                                    <table cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td style="background-color: #f27900; border-radius: 8px;">
+                                                <a href="https://calendly.com/beamxsolutions" style="display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
+                                                    Schedule Your Free Consultation
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            
+                            <!-- Spacer -->
+                            <tr><td style="height: 28px;"></td></tr>
+                            
+                            <!-- Footer -->
+                            <tr>
+                                <td style="background-color: #02428e; padding: 24px 20px; text-align: center;">
+                                    <p style="color: #ffffff; font-size: 14px; margin: 0 0 16px 0;">Follow us on</p>
+                                    
+                                    <!-- Social Icons -->
+                                    <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 0 32px 0;">
+                                        <tr>
+                                            <td style="padding: 0 16px;">
+                                                <a href="#" style="color: #ffffff; text-decoration: none;">Facebook</a>
+                                            </td>
+                                            <td style="padding: 0 16px;">
+                                                <a href="#" style="color: #ffffff; text-decoration: none;">Instagram</a>
+                                            </td>
+                                            <td style="padding: 0 16px;">
+                                                <a href="#" style="color: #ffffff; text-decoration: none;">Twitter</a>
+                                            </td>
+                                            <td style="padding: 0 16px;">
+                                                <a href="#" style="color: #ffffff; text-decoration: none;">LinkedIn</a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <p style="color: #ffffff; font-size: 14px; margin: 0 0 32px 0;">
+                                        <a href="https://beamxsolutions.com" style="color: #ffffff; text-decoration: none;">www.beamxsolutions.com</a>
+                                    </p>
+                                    
+                                    <p style="color: #ffffff; font-size: 14px; line-height: 20px; margin: 0 0 32px 0;">
+                                        This email was generated from your business assessment at 
+                                        <a href="https://beamxsolutions.com/tools/business-assessment" style="color: #ffffff; text-decoration: underline;">beamxsolutions.com/tools/business-assessment</a>
+                                    </p>
+                                    
+                                    <p style="color: #008bd8; font-size: 14px; margin: 0;">
+                                        Copyright © 2025 BeamXSolutions
+                                    </p>
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </td>
+                </tr>
+            </table>
         </body>
         </html>
         """
@@ -713,16 +508,19 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
         What's Next?
         Ready to transform these insights into growth? Our team specializes in helping {form_data.industry.lower()} businesses overcome challenges and achieve sustainable growth.
 
+        Schedule Your Free Consultation: https://calendly.com/beamxsolutions
+
         Contact Us:
         Website: https://beamxsolutions.com
         Email: info@beamxsolutions.com
-        Schedule a consultation: https://calendly.com/beamxsolutions
 
         Best regards,
         The BeamX Solutions Team
 
         ---
-        This email was generated from your business assessment at https://beamxsolutions.com/business-assessment
+        This email was generated from your business assessment at https://beamxsolutions.com/tools/business-assessment
+        
+        Copyright © 2025 BeamXSolutions
         """
         
         # Send email using Resend
@@ -733,10 +531,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
             "html": html_content,
             "text": text_content,
             "attachments": [
-            {
-                "filename": "BeamX_Business_Assessment_Report.pdf",
-                "content": pdf_base64
-            }
+                {
+                    "filename": "BeamX_Business_Assessment_Report.pdf",
+                    "content": pdf_base64
+                }
             ]
         }
         
