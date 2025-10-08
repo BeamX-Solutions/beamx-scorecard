@@ -75,84 +75,84 @@ else:
 # Pydantic model for input validation and API documentation
 class ScorecardInput(BaseModel):
     revenue: Literal[
-        "Under $10K", 
-        "$10K–$50K", 
-        "$50K–$250K", 
-        "$250K–$1M", 
+        "Under $10K",
+        "$10K–$50K",
+        "$50K–$250K",
+        "$250K–$1M",
         "Over $1M"
     ] = Field(..., description="Annual revenue range")
-    
+
     profit_margin_known: Literal["Yes", "No"] = Field(
         ..., description="Whether profit margins are tracked"
     )
-    
+
     monthly_expenses: Literal[
-        "Unknown", 
+        "Unknown",
         "≤$500",
         "$500–$1K",
-        "$1K–$5K", 
-        "$5K–$20K", 
+        "$1K–$5K",
+        "$5K–$20K",
         "$20K+"
     ] = Field(..., description="Monthly operating expenses")
-    
+
     cac_tracked: Literal["Yes", "No"] = Field(
         ..., description="Whether Customer Acquisition Cost is tracked"
     )
-    
+
     retention_rate: Literal[
-        "<10%", 
-        "10–25%", 
-        "25–50%", 
-        "50–75%", 
+        "<10%",
+        "10–25%",
+        "25–50%",
+        "50–75%",
         "75%+"
     ] = Field(..., description="Customer retention rate")
-    
+
     digital_campaigns: Literal[
-        "No", 
-        "Sometimes", 
+        "No",
+        "Sometimes",
         "Consistently"
     ] = Field(..., description="Frequency of digital marketing campaigns")
-    
+
     analytics_tools: Literal[
-        "No", 
-        "Basic tools (Excel, etc.)", 
+        "No",
+        "Basic tools (Excel, etc.)",
         "Advanced or custom dashboards"
     ] = Field(..., description="Analytics tools usage")
-    
+
     crm_used: Literal["Yes", "No"] = Field(
         ..., description="Whether CRM system is used"
     )
-    
+
     data_mgmt: Literal[
-        "Scattered or manual", 
-        "Somewhat structured", 
+        "Scattered or manual",
+        "Somewhat structured",
         "Centralized and automated"
     ] = Field(..., description="Data management approach")
-    
+
     sops_doc: Literal[
-        "No", 
-        "Somewhat", 
+        "No",
+        "Somewhat",
         "Fully documented"
     ] = Field(..., description="Standard Operating Procedures documentation level")
-    
+
     team_size: Literal[
-        "1 (solo)", 
-        "2–4", 
-        "5–10", 
-        "11–50", 
+        "1 (solo)",
+        "2–4",
+        "5–10",
+        "11–50",
         "50+"
     ] = Field(..., description="Team size")
-    
+
     pain_point: Literal[
-        "Not growing", 
-        "Systems are chaotic", 
+        "Not growing",
+        "Systems are chaotic",
         "Don't know what to optimize",
-        "Need to reduce cost", 
+        "Need to reduce cost",
         "Need funding",
-        "Need more clients/customers", 
+        "Need more clients/customers",
         "Growing fast, need structure"
     ] = Field(..., description="Primary business pain point")
-    
+
     industry: str = Field(..., min_length=1, max_length=100, description="Industry sector")
 
 # Pydantic model for email request
@@ -168,7 +168,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=1*inch)
     styles = getSampleStyleSheet()
     story = []
-    
+
     # Custom styles
     title_style = ParagraphStyle(
         'CustomTitle',
@@ -178,7 +178,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         textColor=colors.HexColor('#1f2937'),
         alignment=1  # Center alignment
     )
-    
+
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
@@ -186,13 +186,13 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         spaceAfter=12,
         textColor=colors.HexColor('#374151')
     )
-    
+
     # Title and header
     story.append(Paragraph("Business Assessment Report", title_style))
     story.append(Paragraph("BeamX Solutions", styles['Normal']))
     story.append(Paragraph(f"Generated on {datetime.datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
     story.append(Spacer(1, 20))
-    
+
     # Executive Summary
     story.append(Paragraph("Executive Summary", heading_style))
     story.append(Paragraph(f"<b>Industry:</b> {form_data.industry}", styles['Normal']))
@@ -200,16 +200,16 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     story.append(Paragraph(f"<b>Annual Revenue:</b> {form_data.revenue}", styles['Normal']))
     story.append(Paragraph(f"<b>Primary Pain Point:</b> {form_data.pain_point}", styles['Normal']))
     story.append(Spacer(1, 20))
-    
+
     # Overall Score
     story.append(Paragraph("Overall Assessment", heading_style))
     story.append(Paragraph(f"<b>Total Score:</b> {result['total_score']}/100", styles['Normal']))
     story.append(Paragraph(f"<b>Business Maturity Level:</b> {result['label']}", styles['Normal']))
     story.append(Spacer(1, 20))
-    
+
     # Score Breakdown Table
     story.append(Paragraph("Detailed Score Breakdown", heading_style))
-    
+
     breakdown_data = [
         ['Category', 'Your Score', 'Max Score', 'Percentage'],
         ['Financial Health', f"{result['breakdown']['financial']}", '25', f"{(result['breakdown']['financial']/25)*100:.0f}%"],
@@ -217,7 +217,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         ['Digital Maturity', f"{result['breakdown']['digital']}", '25', f"{(result['breakdown']['digital']/25)*100:.0f}%"],
         ['Operational Efficiency', f"{result['breakdown']['operations']}", '25', f"{(result['breakdown']['operations']/25)*100:.0f}%"],
     ]
-    
+
     breakdown_table = Table(breakdown_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1*inch])
     breakdown_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f3f4f6')),
@@ -229,17 +229,17 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
     ]))
-    
+
     story.append(breakdown_table)
     story.append(Spacer(1, 30))
-    
+
     # Advisory Section
     story.append(Paragraph("Strategic Advisory & Recommendations", heading_style))
-    
+
     # Clean up the advisory text and split into paragraphs
     advisory_text = result.get('advisory', '')
     advisory_paragraphs = advisory_text.split('\n')
-    
+
     for para in advisory_paragraphs:
         if para.strip():
             if para.startswith('**') and para.endswith('**'):
@@ -253,19 +253,19 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 # Regular paragraphs
                 story.append(Paragraph(para, styles['Normal']))
             story.append(Spacer(1, 6))
-    
+
     story.append(Spacer(1, 30))
-    
+
     # Next Steps and Contact Information
     story.append(Paragraph("Ready to Take Action?", heading_style))
     story.append(Paragraph("Based on your assessment results, BeamX Solutions can help you implement the strategic recommendations outlined above.", styles['Normal']))
     story.append(Spacer(1, 12))
-    
+
     story.append(Paragraph("<b>Contact Us:</b>", styles['Normal']))
     story.append(Paragraph("🌐 Website: https://beamxsolutions.com", styles['Normal']))
     story.append(Paragraph("📧 Email: info@beamxsolutions.com", styles['Normal']))
     story.append(Paragraph("📞 Schedule a consultation: https://calendly.com/beamxsolutions", styles['Normal']))
-    
+
     # Build PDF
     doc.build(story)
     buffer.seek(0)
@@ -277,13 +277,13 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
     if not resend_api_key:
         logger.error("Resend API key not configured")
         return False
-    
+
     try:
         # Generate PDF
         pdf_buffer = generate_pdf_report(result, form_data)
         pdf_content = pdf_buffer.read()
         pdf_base64 = base64.b64encode(pdf_content).decode()
-        
+
         # Create email content - optimized for email clients
         html_content = f"""
         <!DOCTYPE html>
@@ -303,7 +303,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                 <tr>
                     <td align="center" style="padding: 20px 0;">
                         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
-                            
+
                             <!-- Header -->
                             <tr>
                                 <td style="background-color: #02428e; padding: 40px 20px; text-align: center;">
@@ -313,10 +313,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </h1>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- Introduction -->
                             <tr>
                                 <td style="padding: 0 30px;">
@@ -326,10 +326,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </p>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- Score Card -->
                             <tr>
                                 <td align="center">
@@ -348,10 +348,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </table>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- Score Breakdown Card -->
                             <tr>
                                 <td style="padding: 0 30px;">
@@ -359,22 +359,22 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                         <tr>
                                             <td>
                                                 <h2 style="color: #008bd8; font-size: 16px; font-weight: 700; margin: 0 0 24px 0;">Score Breakdown</h2>
-                                                
+
                                                 <!-- Financial Health -->
                                                 <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
                                                     <span style="font-weight: 600;">💰 Financial Health:</span> {result['breakdown']['financial']}/25
                                                 </p>
-                                                
+
                                                 <!-- Growth Readiness -->
                                                 <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
                                                     <span style="font-weight: 600;">📈 Growth Readiness:</span> {result['breakdown']['growth']}/25
                                                 </p>
-                                                
+
                                                 <!-- Digital Maturity -->
                                                 <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0 0 12px 0;">
                                                     <span style="font-weight: 600;">💻 Digital Maturity:</span> {result['breakdown']['digital']}/25
                                                 </p>
-                                                
+
                                                 <!-- Operational Efficiency -->
                                                 <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
                                                     <span style="font-weight: 600;">⚙️ Operational Efficiency:</span> {result['breakdown']['operations']}/25
@@ -384,10 +384,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </table>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- PDF Info -->
                             <tr>
                                 <td style="padding: 0 30px;">
@@ -396,20 +396,20 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </p>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- What's Next Title -->
                             <tr>
                                 <td style="padding: 0 30px;">
                                     <h2 style="color: #008bd8; font-size: 16px; font-weight: 700; margin: 0;">What's Next?</h2>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- What's Next Content -->
                             <tr>
                                 <td style="padding: 0 30px;">
@@ -418,10 +418,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </p>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- CTA Button -->
                             <tr>
                                 <td align="center">
@@ -436,60 +436,68 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     </table>
                                 </td>
                             </tr>
-                            
+
                             <!-- Spacer -->
                             <tr><td style="height: 28px;"></td></tr>
-                            
+
                             <!-- Footer -->
                             <tr>
                                 <td style="background-color: #02428e; padding: 24px 20px; text-align: center;">
                                     <p style="color: #ffffff; font-size: 14px; margin: 0 0 16px 0;">Follow us on</p>
-                                    
+
                                     <!-- Social Icons -->
                                     <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 0 32px 0;">
                                         <tr>
                                             <!-- Facebook -->
-                                            <td style="padding: 0 8px;">
-                                                <a href="https://facebook.com/beamxsolutions" style="display: inline-block;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="40" height="40" style="display: block; border-radius: 50%;" />
+                                            <td style="padding: 0 12px;">
+                                                <a href="https://facebook.com/beamxsolutions" style="display: inline-block; text-decoration: none;">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.971h-1.513c-1.491 0-1.956.93-1.956 1.886v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" fill="#ffffff"/>
+                                                    </svg>
                                                 </a>
                                             </td>
                                             <!-- Instagram -->
-                                            <td style="padding: 0 8px;">
-                                                <a href="https://instagram.com/beamxsolutions" style="display: inline-block;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="40" height="40" style="display: block; border-radius: 50%;" />
+                                            <td style="padding: 0 12px;">
+                                                <a href="https://instagram.com/beamxsolutions" style="display: inline-block; text-decoration: none;">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" fill="#ffffff"/>
+                                                    </svg>
                                                 </a>
                                             </td>
                                             <!-- Twitter/X -->
-                                            <td style="padding: 0 8px;">
-                                                <a href="https://twitter.com/beamxsolutions" style="display: inline-block;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="X (Twitter)" width="40" height="40" style="display: block; border-radius: 50%;" />
+                                            <td style="padding: 0 12px;">
+                                                <a href="https://twitter.com/beamxsolutions" style="display: inline-block; text-decoration: none;">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#ffffff"/>
+                                                    </svg>
                                                 </a>
                                             </td>
                                             <!-- LinkedIn -->
-                                            <td style="padding: 0 8px;">
-                                                <a href="https://linkedin.com/company/beamxsolutions" style="display: inline-block;">
-                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733561.png" alt="LinkedIn" width="40" height="40" style="display: block; border-radius: 50%;" />
+                                            <td style="padding: 0 12px;">
+                                                <a href="https://linkedin.com/company/beamxsolutions" style="display: inline-block; text-decoration: none;">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#ffffff"/>
+                                                    </svg>
                                                 </a>
                                             </td>
                                         </tr>
                                     </table>
-                                    
+
                                     <p style="color: #ffffff; font-size: 14px; margin: 0 0 32px 0;">
                                         <a href="https://beamxsolutions.com" style="color: #ffffff; text-decoration: none;">www.beamxsolutions.com</a>
                                     </p>
-                                    
+
                                     <p style="color: #ffffff; font-size: 14px; line-height: 20px; margin: 0 0 32px 0;">
-                                        This email was generated from your business assessment <br>at 
+                                        This email was generated from your business assessment <br>at
                                         <a href="https://beamxsolutions.com/tools/business-assessment" style="color: #ffffff; text-decoration: underline;">beamxsolutions.com/tools/business-assessment</a>
                                     </p>
-                                    
+
                                     <p style="color: #008bd8; font-size: 14px; margin: 0;">
                                         Copyright © 2025 BeamXSolutions
                                     </p>
                                 </td>
                             </tr>
-                            
+
                         </table>
                     </td>
                 </tr>
@@ -497,7 +505,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
         </body>
         </html>
         """
-        
+
         # Plain text version
         text_content = f"""
         Your Business Assessment Results - BeamX Solutions
@@ -530,10 +538,10 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
 
         ---
         This email was generated from your business assessment at https://beamxsolutions.com/tools/business-assessment
-        
+
         Copyright © 2025 BeamXSolutions
         """
-        
+
         # Send email using Resend
         params = {
             "from": f"BeamX Solutions <{from_email}>",
@@ -548,12 +556,12 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                 }
             ]
         }
-        
+
         email_response = resend.Emails.send(params)
-        
+
         logger.info(f"Email sent successfully via Resend to {recipient_email}, ID: {email_response.get('id', 'unknown')}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to send email via Resend to {recipient_email}: {str(e)}")
         return False
@@ -562,28 +570,28 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
 def score_financial_health(data: ScorecardInput) -> int:
     """Calculate financial health score (0-25 points)"""
     revenue_map = {
-        "Under $10K": 1, 
-        "$10K–$50K": 2, 
-        "$50K–$250K": 3, 
-        "$250K–$1M": 4, 
+        "Under $10K": 1,
+        "$10K–$50K": 2,
+        "$50K–$250K": 3,
+        "$250K–$1M": 4,
         "Over $1M": 5
     }
     expenses_map = {
-        "Unknown": 1, 
+        "Unknown": 1,
         "≤$500": 2,
         "$500–$1K": 3,
-        "$1K–$5K": 4, 
+        "$1K–$5K": 4,
         "$5K–$20K": 5,
         "$20K+": 6
     }
-    
+
     revenue_score = revenue_map[data.revenue]
     profit_score = 1 if data.profit_margin_known == "Yes" else 0
     expenses_score = expenses_map[data.monthly_expenses]
-    
+
     total_score = revenue_score + profit_score + expenses_score
     max_score = 5 + 1 + 6
-    
+
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Financial score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
@@ -591,25 +599,25 @@ def score_financial_health(data: ScorecardInput) -> int:
 def score_growth_readiness(data: ScorecardInput) -> int:
     """Calculate growth readiness score (0-25 points)"""
     retention_map = {
-        "<10%": 1, 
-        "10–25%": 2, 
-        "25–50%": 3, 
-        "50–75%": 4, 
+        "<10%": 1,
+        "10–25%": 2,
+        "25–50%": 3,
+        "50–75%": 4,
         "75%+": 5
     }
     campaign_map = {
-        "No": 1, 
-        "Sometimes": 3, 
+        "No": 1,
+        "Sometimes": 3,
         "Consistently": 5
     }
-    
+
     cac_score = 1 if data.cac_tracked == "Yes" else 0
     retention_score = retention_map[data.retention_rate]
     campaign_score = campaign_map[data.digital_campaigns]
-    
+
     total_score = cac_score + retention_score + campaign_score
     max_score = 1 + 5 + 5
-    
+
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Growth score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
@@ -617,23 +625,23 @@ def score_growth_readiness(data: ScorecardInput) -> int:
 def score_digital_maturity(data: ScorecardInput) -> int:
     """Calculate digital maturity score (0-25 points)"""
     analytics_map = {
-        "No": 1, 
-        "Basic tools (Excel, etc.)": 3, 
+        "No": 1,
+        "Basic tools (Excel, etc.)": 3,
         "Advanced or custom dashboards": 5
     }
     data_map = {
-        "Scattered or manual": 1, 
-        "Somewhat structured": 3, 
+        "Scattered or manual": 1,
+        "Somewhat structured": 3,
         "Centralized and automated": 5
     }
-    
+
     analytics_score = analytics_map[data.analytics_tools]
     crm_score = 1 if data.crm_used == "Yes" else 0
     data_score = data_map[data.data_mgmt]
-    
+
     total_score = analytics_score + crm_score + data_score
     max_score = 5 + 1 + 5
-    
+
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Digital score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
@@ -641,34 +649,34 @@ def score_digital_maturity(data: ScorecardInput) -> int:
 def score_operational_efficiency(data: ScorecardInput) -> int:
     """Calculate operational efficiency score (0-25 points)"""
     sop_map = {
-        "No": 1, 
-        "Somewhat": 3, 
+        "No": 1,
+        "Somewhat": 3,
         "Fully documented": 5
     }
     team_map = {
-        "1 (solo)": 1, 
-        "2–4": 2, 
-        "5–10": 3, 
-        "11–50": 4, 
+        "1 (solo)": 1,
+        "2–4": 2,
+        "5–10": 3,
+        "11–50": 4,
         "50+": 5
     }
     pain_map = {
-        "Not growing": 1, 
-        "Systems are chaotic": 2, 
+        "Not growing": 1,
+        "Systems are chaotic": 2,
         "Don't know what to optimize": 3,
         "Need to reduce cost": 3,
-        "Need funding": 4, 
+        "Need funding": 4,
         "Need more clients/customers": 4,
         "Growing fast, need structure": 5
     }
-    
+
     sop_score = sop_map[data.sops_doc]
     team_score = team_map[data.team_size]
     pain_score = pain_map[data.pain_point]
-    
+
     total_score = sop_score + team_score + pain_score
     max_score = 5 + 5 + 5
-    
+
     normalized_score = round((total_score / max_score) * 25)
     logger.info(f"Operations score: {normalized_score}/25 (raw: {total_score}/{max_score})")
     return normalized_score
@@ -676,35 +684,35 @@ def score_operational_efficiency(data: ScorecardInput) -> int:
 # GPT-5 advisory generation function (unchanged from original)
 async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, int]) -> str:
     """Generate advisory using GPT-5 with proper parameters"""
-    
+
     prompt = f"""
     Write a comprehensive growth advisory for a {input_data.industry} business with these scores:
     • Financial Health: {scores['financial']}/25
-    • Growth Readiness: {scores['growth']}/25  
+    • Growth Readiness: {scores['growth']}/25
     • Digital Maturity: {scores['digital']}/25
     • Operations Efficiency: {scores['operations']}/25
-    
+
     Business Context:
     • Revenue: {input_data.revenue}
     • Team Size: {input_data.team_size}
     • Primary Pain Point: {input_data.pain_point}
-    
+
     Provide your response in this exact format with proper line breaks:
-    
+
     **Strategic Insights:**
-    
+
     • [Insight based on strongest and weakest areas]
-    
+
     • [Industry-specific insight]
-    
+
     • [Growth opportunity insight]
-    
+
     **Action Steps:**
-    
+
     • [Immediate actionable step addressing lowest score]
-    
+
     • [Strategic step for next 90 days]
-    
+
     CRITICAL FORMATTING RULES:
     - Each bullet point must be on its own line with a blank line after it
     - NEVER use em dashes (—) anywhere in your response
@@ -712,19 +720,19 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
     - Instead of dashes, use words like "and", "while", "to", or rephrase sentences completely
     - Use commas, periods, and conjunctions instead of any type of dash
     """
-    
+
     try:
         logger.info("Calling GPT-5 API for advisory generation")
-        
+
         response = client.chat.completions.create(
             model="gpt-5",
             messages=[
                 {
-                    "role": "system", 
+                    "role": "system",
                     "content": "You are an expert business growth advisor specializing in data-driven recommendations. Provide specific, actionable advice based on the scorecard metrics."
                 },
                 {
-                    "role": "user", 
+                    "role": "user",
                     "content": prompt
                 }
             ],
@@ -732,18 +740,18 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
             verbosity="medium",
             reasoning_effort="minimal"
         )
-        
+
         advisory = response.choices[0].message.content.strip()
         logger.info("GPT-5 advisory generated successfully")
         return advisory
-        
+
     except Exception as e:
         logger.error(f"Error calling GPT-5 API: {e}")
-        
+
         # Fallback advisory generation when API fails
         strongest_area = max(scores, key=scores.get)
         weakest_area = min(scores, key=scores.get)
-        
+
         fallback_advisory = f"""
         **Strategic Insights:**
         • Your {strongest_area} capabilities (score: {scores[strongest_area]}/25) provide a solid foundation for growth in the {input_data.industry} sector, but {weakest_area} (score: {scores[weakest_area]}/25) needs immediate attention.
@@ -757,25 +765,25 @@ async def generate_gpt5_advisory(input_data: ScorecardInput, scores: Dict[str, i
 
         • Leverage your strength in {strongest_area} to create a 90 day improvement plan that builds momentum while fixing foundational issues.
                 """.strip()
-        
+
         return fallback_advisory
 
 # Main API endpoint for generating scorecard reports (unchanged)
 @app.post("/generate-report")
 async def generate_report(input_data: ScorecardInput):
     """Generate comprehensive business scorecard report"""
-    
+
     logger.info(f"Generating report for {input_data.industry} business")
-    
+
     try:
         # Calculate all scoring dimensions
         financial_score = score_financial_health(input_data)
         growth_score = score_growth_readiness(input_data)
         digital_score = score_digital_maturity(input_data)
         operations_score = score_operational_efficiency(input_data)
-        
+
         total_score = financial_score + growth_score + digital_score + operations_score
-        
+
         # Determine business maturity classification
         if total_score >= 90:
             label = "Built for Scale"
@@ -785,9 +793,9 @@ async def generate_report(input_data: ScorecardInput):
             label = "Developing"
         else:
             label = "Early Stage"
-        
+
         logger.info(f"Total score: {total_score}/100, Label: {label}")
-        
+
         # Organize scores for response and advisory generation
         scores = {
             "financial": financial_score,
@@ -795,17 +803,17 @@ async def generate_report(input_data: ScorecardInput):
             "digital": digital_score,
             "operations": operations_score
         }
-        
+
         # Generate AI-powered business advisory
         advisory = await generate_gpt5_advisory(input_data, scores)
-        
+
         # Create timestamp for record keeping
         timestamp = datetime.datetime.utcnow().isoformat()
-        
+
         # Save assessment data to Supabase database
         try:
             logger.info("Saving assessment to Supabase")
-            
+
             supabase_data = {
                 "revenue": input_data.revenue,
                 "profit_margin_known": input_data.profit_margin_known,
@@ -825,17 +833,17 @@ async def generate_report(input_data: ScorecardInput):
                 "advisory": advisory,
                 "generated_at": timestamp
             }
-            
+
             response = supabase.table("basic_assessments").insert(supabase_data).execute()
             logger.info(f"Successfully saved assessment with ID: {response.data[0]['id'] if response.data else 'unknown'}")
-            
+
         except Exception as e:
             logger.error(f"Error saving to Supabase: {str(e)}")
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail=f"Error saving assessment data: {str(e)}"
             )
-        
+
         # Return comprehensive assessment results
         return {
             "total_score": total_score,
@@ -851,7 +859,7 @@ async def generate_report(input_data: ScorecardInput):
                 "areas_for_improvement": [k for k, v in scores.items() if v < 15]
             }
         }
-        
+
     except HTTPException:
         # Re-raise HTTPExceptions without modification
         raise
@@ -866,9 +874,9 @@ async def generate_report(input_data: ScorecardInput):
 @app.post("/email-results")
 async def email_results(email_request: EmailRequest):
     """Send assessment results via email using Resend"""
-    
+
     logger.info(f"Sending email via Resend to {email_request.email}")
-    
+
     try:
         # Send email with PDF attachment using Resend
         success = send_email_with_resend(
@@ -876,7 +884,7 @@ async def email_results(email_request: EmailRequest):
             email_request.result,
             email_request.formData
         )
-        
+
         if success:
             # Log the email send to Supabase
             try:
@@ -891,18 +899,18 @@ async def email_results(email_request: EmailRequest):
                 logger.info(f"Email send logged to database for {email_request.email}")
             except Exception as e:
                 logger.warning(f"Failed to log email send to database: {e}")
-            
+
             return {
-                "status": "success", 
+                "status": "success",
                 "message": "Email sent successfully via Resend",
                 "provider": "resend"
             }
         else:
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail="Failed to send email via Resend"
             )
-            
+
     except HTTPException:
         raise
     except Exception as e:
