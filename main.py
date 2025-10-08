@@ -445,31 +445,31 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                 <td style="background-color: #02428e; padding: 24px 20px; text-align: center;">
                                     <p style="color: #ffffff; font-size: 14px; margin: 0 0 16px 0;">Follow us on</p>
                                     
-                                    <!-- Social Icons with circular backgrounds - Improved for better rendering and consistency -->
+                                    <!-- Social Icons -->
                                     <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 0 32px 0;">
                                         <tr>
                                             <!-- Facebook -->
                                             <td style="padding: 0 8px;">
-                                                <a href="https://facebook.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #3b5998; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none; vertical-align: middle;" title="Facebook">
-                                                    <span style="color: #ffffff; font-size: 18px; font-weight: bold; line-height: 40px; display: inline-block; vertical-align: middle;">f</span>
+                                                <a href="https://facebook.com/beamxsolutions" style="display: inline-block;">
+                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="40" height="40" style="display: block; border-radius: 50%;" />
                                                 </a>
                                             </td>
                                             <!-- Instagram -->
                                             <td style="padding: 0 8px;">
-                                                <a href="https://instagram.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #E4405F; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none; vertical-align: middle;" title="Instagram">
-                                                    <span style="color: #ffffff; font-size: 20px; line-height: 40px; display: inline-block; vertical-align: middle;">📸</span>
+                                                <a href="https://instagram.com/beamxsolutions" style="display: inline-block;">
+                                                    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="40" height="40" style="display: block; border-radius: 50%;" />
                                                 </a>
                                             </td>
                                             <!-- Twitter/X -->
                                             <td style="padding: 0 8px;">
-                                                <a href="https://twitter.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #000000; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none; vertical-align: middle;" title="X (formerly Twitter)">
-                                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold; line-height: 40px; display: inline-block; vertical-align: middle;">𝕏</span>
+                                                <a href="https://twitter.com/beamxsolutions" style="display: inline-block;">
+                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="X (Twitter)" width="40" height="40" style="display: block; border-radius: 50%;" />
                                                 </a>
                                             </td>
                                             <!-- LinkedIn -->
                                             <td style="padding: 0 8px;">
-                                                <a href="https://linkedin.com/company/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #0077B5; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none; vertical-align: middle;" title="LinkedIn">
-                                                    <span style="color: #ffffff; font-size: 14px; font-weight: bold; line-height: 40px; display: inline-block; vertical-align: middle;">in</span>
+                                                <a href="https://linkedin.com/company/beamxsolutions" style="display: inline-block;">
+                                                    <img src="https://cdn-icons-png.flaticon.com/512/733/733561.png" alt="LinkedIn" width="40" height="40" style="display: block; border-radius: 50%;" />
                                                 </a>
                                             </td>
                                         </tr>
