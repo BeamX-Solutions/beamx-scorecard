@@ -307,7 +307,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                             <!-- Header -->
                             <tr>
                                 <td style="background-color: #02428e; padding: 40px 20px; text-align: center;">
-                                    <img src="https://beamx-scorecard.onrender.com/asset-1-1.svg" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
+                                    <img src="https://beamxsolutions.com/asset-1-2.png" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
                                     <h1 style="color: #ffffff; font-size: 36px; font-weight: 600; margin: 0; line-height: 48px; font-family: Arial, Helvetica, sans-serif;">
                                         Your Business<br>Assessment Results
                                     </h1>
