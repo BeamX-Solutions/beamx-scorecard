@@ -307,7 +307,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                             <!-- Header -->
                             <tr>
                                 <td style="background-color: #02428e; padding: 40px 20px; text-align: center;">
-                                    <img src="https://beamxsolutions.com/asset-1-1.svg" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
+                                    <img src="https://beamx-scorecard.onrender.com/asset-1-1.svg" alt="BeamX Solutions" width="112" height="50" style="display: block; margin: 0 auto 24px;" />
                                     <h1 style="color: #ffffff; font-size: 36px; font-weight: 600; margin: 0; line-height: 48px; font-family: Arial, Helvetica, sans-serif;">
                                         Your Business<br>Assessment Results
                                     </h1>
@@ -445,20 +445,32 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                 <td style="background-color: #02428e; padding: 24px 20px; text-align: center;">
                                     <p style="color: #ffffff; font-size: 14px; margin: 0 0 16px 0;">Follow us on</p>
                                     
-                                    <!-- Social Icons -->
+                                    <!-- Social Icons with circular backgrounds -->
                                     <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 0 32px 0;">
                                         <tr>
-                                            <td style="padding: 0 16px;">
-                                                <a href="#" style="color: #ffffff; text-decoration: none;">Facebook</a>
+                                            <!-- Facebook -->
+                                            <td style="padding: 0 8px;">
+                                                <a href="https://facebook.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #3b5998; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none;" title="Facebook">
+                                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold;">f</span>
+                                                </a>
                                             </td>
-                                            <td style="padding: 0 16px;">
-                                                <a href="#" style="color: #ffffff; text-decoration: none;">Instagram</a>
+                                            <!-- Instagram -->
+                                            <td style="padding: 0 8px;">
+                                                <a href="https://instagram.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #E4405F; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none;" title="Instagram">
+                                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold;">📷</span>
+                                                </a>
                                             </td>
-                                            <td style="padding: 0 16px;">
-                                                <a href="#" style="color: #ffffff; text-decoration: none;">Twitter</a>
+                                            <!-- Twitter/X -->
+                                            <td style="padding: 0 8px;">
+                                                <a href="https://twitter.com/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #000000; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none;" title="Twitter">
+                                                    <span style="color: #ffffff; font-size: 18px; font-weight: bold;">𝕏</span>
+                                                </a>
                                             </td>
-                                            <td style="padding: 0 16px;">
-                                                <a href="#" style="color: #ffffff; text-decoration: none;">LinkedIn</a>
+                                            <!-- LinkedIn -->
+                                            <td style="padding: 0 8px;">
+                                                <a href="https://linkedin.com/company/beamxsolutions" style="display: inline-block; width: 40px; height: 40px; background-color: #0077B5; border-radius: 50%; text-align: center; line-height: 40px; text-decoration: none;" title="LinkedIn">
+                                                    <span style="color: #ffffff; font-size: 20px; font-weight: bold;">in</span>
+                                                </a>
                                             </td>
                                         </tr>
                                     </table>
