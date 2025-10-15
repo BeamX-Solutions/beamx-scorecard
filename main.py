@@ -446,12 +446,12 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                                     <p style="color: #ffffff; font-size: 14px; margin: 0 0 16px 0;">Follow us on</p>
 
                                     <!-- Social Icons -->
-                                    <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 0 32px 0;">
+                                    <table cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto 32px auto; text-align: center;">
                                         <tr>
                                             <!-- Facebook -->
                                             <td style="padding: 0 12px;">
                                                 <a href="https://facebook.com/beamxsolutions" style="display: inline-block; text-decoration: none;">
-                                                    <img src="https://beamxsolutions.com/images/facebook-icon.png" alt="Facebook" width="24" height="24" style="display: block;">
+                                                    <img src="https://beamxsolutions.com/facebook-img.png" alt="Facebook" width="24" height="24" style="display: block;">
                                                 </a>
                                             </td>
                                             <!-- Instagram -->
