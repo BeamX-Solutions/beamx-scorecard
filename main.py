@@ -149,7 +149,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     # Use direct image URLs
     logo_url = 'https://beamxsolutions.com/Beamx-Logo-Colour.png'
     cover_bg_url = 'https://beamxsolutions.com/front-background.PNG'
-    cta_img_url = 'https://beamxsolutions.com/cta-image.jpg'
+    cta_img_url = 'https://beamxsolutions.com/cta-image.png'
    
     # Parse advisory into sections
     advisory_sections = parse_advisory_sections(result.get('advisory', ''))
@@ -446,6 +446,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .contact-icon {{
                 margin-right: 12px;
                 font-size: 20px;
+                color: #FF8C00;
             }}
         </style>
     </head>
@@ -577,10 +578,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         <div class="page page-cta">
             <h2 class="cta-title">Ready to Take Action?</h2>
             <div class="cta-text-box">
-                <p>Based on your assessment results, BeamX Solutions can help you implement the
-                strategic recommendations outlined above. Our team specializes in helping
-                {form_data.industry.lower()} businesses overcome challenges and achieve
-                sustainable growth.</p>
+                <p>Based on your assessment results, BeamX Solutions can help you implement the strategic recommendations outlined above.</p>
             </div>
             <div class="cta-image-box">
                 <img src="{cta_img_url}" alt="BeamX Solutions Team" class="cta-image" />
