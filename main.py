@@ -148,7 +148,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
    
     # Use direct image URLs
     logo_url = 'https://beamxsolutions.com/Beamx-Logo-Colour.png'
-    cover_bg_url = 'https://beamxsolutions.com/front-background.jpg'
+    cover_bg_url = 'https://beamxsolutions.com/front-background.PNG'
     cta_img_url = 'https://beamxsolutions.com/cta-image.jpg'
    
     # Parse advisory into sections
