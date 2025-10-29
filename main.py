@@ -150,6 +150,12 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     logo_url = 'https://beamxsolutions.com/Beamx-Logo-Colour.png'
     cover_bg_url = 'https://beamxsolutions.com/front-background.PNG'
     cta_img_url = 'https://beamxsolutions.com/cta-image.png'
+    
+    # Icon URLs for executive summary
+    industry_icon_url = 'https://beamxsolutions.com/industry.png'
+    team_icon_url = 'https://beamxsolutions.com/team-size.png'
+    revenue_icon_url = 'https://beamxsolutions.com/annual-income.png'
+    painpoint_icon_url = 'https://beamxsolutions.com/pain-point.png'
    
     # Parse advisory into sections
     advisory_sections = parse_advisory_sections(result.get('advisory', ''))
@@ -273,7 +279,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 background: white;
                 border: 3px solid #0066cc;
                 padding: 30px;
-                margin: 0 0 30px 0;
+                margin: 0 0 40px 0;
             }}
             .section-title {{
                 color: #0066cc;
@@ -303,7 +309,12 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 28px;
+                overflow: hidden;
+            }}
+            .icon-circle img {{
+                width: 40px;
+                height: 40px;
+                object-fit: contain;
             }}
             .icon-label {{
                 color: #FF8C00;
@@ -321,7 +332,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 display: flex;
                 align-items: center;
                 gap: 40px;
-                margin: 20px 0 30px 0;
+                margin: 20px 0 40px 0;
                 background: white;
                 padding: 30px;
             }}
@@ -376,7 +387,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 font-size: 22px;
                 font-weight: bold;
                 text-align: center;
-                margin: 25px 0 20px 0;
+                margin: 0 0 20px 0;
             }}
             .insight-row, .action-row {{
                 display: flex;
@@ -429,7 +440,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .cta-image {{
                 width: 100%;
                 max-width: 100%;
-                height: 350px;
+                height: 500px;
                 object-fit: cover;
                 border-radius: 8px;
                 display: block;
@@ -477,22 +488,30 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 <h2 class="section-title">Executive Summary</h2>
                 <div class="summary-icons">
                     <div class="icon-item">
-                        <div class="icon-circle">📊</div>
+                        <div class="icon-circle">
+                            <img src="{industry_icon_url}" alt="Industry" />
+                        </div>
                         <p class="icon-label">Industry</p>
                         <p class="icon-value">{form_data.industry}</p>
                     </div>
                     <div class="icon-item">
-                        <div class="icon-circle">👥</div>
+                        <div class="icon-circle">
+                            <img src="{team_icon_url}" alt="Team Size" />
+                        </div>
                         <p class="icon-label">Team Size</p>
                         <p class="icon-value">{form_data.team_size}</p>
                     </div>
                     <div class="icon-item">
-                        <div class="icon-circle">💰</div>
+                        <div class="icon-circle">
+                            <img src="{revenue_icon_url}" alt="Annual Revenue" />
+                        </div>
                         <p class="icon-label">Annual Revenue</p>
                         <p class="icon-value">{form_data.revenue}</p>
                     </div>
                     <div class="icon-item">
-                        <div class="icon-circle">🎯</div>
+                        <div class="icon-circle">
+                            <img src="{painpoint_icon_url}" alt="Primary Pain Point" />
+                        </div>
                         <p class="icon-label">Primary Pain Point</p>
                         <p class="icon-value">{form_data.pain_point}</p>
                     </div>
@@ -614,6 +633,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     except Exception as e:
         logger.error(f"Error generating PDF with WeasyPrint: {e}")
         raise
+
 
 # Scoring functions
 def score_financial_health(data: ScorecardInput) -> int:
