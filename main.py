@@ -273,7 +273,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             /* CONTENT PAGES */
             .page-content {{
                 background: #f5f5f5;
-                padding: 40px 50px 70px;
+                padding: 40px 50px 100px;
             }}
             .executive-summary-box {{
                 background: white;
@@ -347,7 +347,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .score-table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin: 20px 0 0 0;
+                margin: 20px 0 80px 0;
                 background: white;
             }}
             .score-table thead {{
@@ -522,11 +522,11 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             <div class="assessment-container">
                 <div class="chart-section">
                     <svg width="200" height="200" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="70" fill="none" stroke="#e0e0e0" stroke-width="30"/>
+                        <circle cx="100" cy="100" r="70" fill="none" stroke="#FF8C00" stroke-width="30"/>
                         <circle cx="100" cy="100" r="70" fill="none" stroke="#0066cc" stroke-width="30"
                                 stroke-dasharray="{progress} {circumference}" stroke-dashoffset="0"
                                 transform="rotate(-90 100 100)"/>
-                        <text x="100" y="110" text-anchor="middle" font-size="30" font-weight="bold" fill="#000">
+                        <text x="100" y="105" text-anchor="middle" font-size="26" font-weight="bold" fill="#000">
                             {total_score}/100
                         </text>
                     </svg>
