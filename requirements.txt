@@ -7,3 +7,4 @@ python-multipart
 reportlab
 python-dotenv
 resend
+weasyprint
