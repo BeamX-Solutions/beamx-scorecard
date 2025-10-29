@@ -135,10 +135,13 @@ def parse_advisory_sections(advisory: str) -> Dict[str, list]:
             pairs.append(pair)
         return pairs
    
-    return {
+    result = {
         'insights': split_into_pairs(sections['insights']),
         'actions': split_into_pairs(sections['actions'])
     }
+    
+    logger.info(f"Parsed advisory sections - Insights: {len(sections['insights'])}, Actions: {len(sections['actions'])}")
+    return result
 
 def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     """Generate PDF report using direct image URLs"""
@@ -150,6 +153,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
    
     # Parse advisory into sections
     advisory_sections = parse_advisory_sections(result.get('advisory', ''))
+    logger.info(f"Advisory sections parsed - Insights pairs: {len(advisory_sections['insights'])}, Actions pairs: {len(advisory_sections['actions'])}")
    
     # Calculate circle progress
     total_score = result['total_score']
@@ -164,19 +168,29 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
    
     # Build insights grid HTML
     insights_html = ""
-    for pair in advisory_sections['insights']:
-        insights_html += '<div class="insight-row">'
-        for insight in pair:
-            insights_html += f'<div class="insight-card"><p>{insight}</p></div>'
-        insights_html += '</div>'
+    if advisory_sections['insights']:
+        for pair in advisory_sections['insights']:
+            insights_html += '<div class="insight-row">'
+            for insight in pair:
+                insights_html += f'<div class="insight-card"><p>{insight}</p></div>'
+            insights_html += '</div>'
+    else:
+        insights_html = '<div class="insight-row"><div class="insight-card"><p>No strategic insights available.</p></div></div>'
+    
+    logger.info(f"Generated insights HTML with {len(advisory_sections['insights'])} pairs")
    
     # Build actions grid HTML
     actions_html = ""
-    for pair in advisory_sections['actions']:
-        actions_html += '<div class="action-row">'
-        for action in pair:
-            actions_html += f'<div class="action-card"><p>{action}</p></div>'
-        actions_html += '</div>'
+    if advisory_sections['actions']:
+        for pair in advisory_sections['actions']:
+            actions_html += '<div class="action-row">'
+            for action in pair:
+                actions_html += f'<div class="action-card"><p>{action}</p></div>'
+            actions_html += '</div>'
+    else:
+        actions_html = '<div class="action-row"><div class="action-card"><p>No action steps available.</p></div></div>'
+    
+    logger.info(f"Generated actions HTML with {len(advisory_sections['actions'])} pairs")
    
     html_content = f'''
     <!DOCTYPE html>
@@ -208,7 +222,10 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             
             /* COVER PAGE */
             .page-cover {{
-                background: linear-gradient(rgba(0, 51, 153, 0.5), rgba(0, 51, 153, 0.7)), url('{cover_bg_url}') center center/cover no-repeat;
+                background-image: url('{cover_bg_url}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
                 color: white;
                 display: flex;
                 flex-direction: column;
@@ -238,12 +255,12 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 color: white;
             }}
             .prepared-label, .generated-label {{
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 600;
                 margin: 0 0 5px 0;
             }}
             .prepared-name, .generated-date {{
-                font-size: 16px;
+                font-size: 18px;
                 margin: 0 0 20px 0;
             }}
             
@@ -290,13 +307,13 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             }}
             .icon-label {{
                 color: #FF8C00;
-                font-size: 13px;
+                font-size: 15px;
                 font-weight: 600;
                 margin: 0 0 6px 0;
             }}
             .icon-value {{
                 color: #000;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 700;
                 margin: 0;
             }}
@@ -312,7 +329,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 flex-shrink: 0;
             }}
             .maturity-level {{
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: 600;
                 margin: 0;
             }}
@@ -331,13 +348,13 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 text-align: center;
                 border: 1px solid #FF8C00;
                 font-weight: 700;
-                font-size: 15px;
+                font-size: 16px;
             }}
             .score-table td {{
                 padding: 12px 18px;
                 text-align: center;
                 border: 1px solid #ddd;
-                font-size: 14px;
+                font-size: 15px;
             }}
             .score-table tbody tr:nth-child(even) {{
                 background: #f9f9f9;
@@ -352,7 +369,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 padding: 12px 50px;
                 display: flex;
                 justify-content: space-between;
-                font-size: 13px;
+                font-size: 14px;
             }}
             .subsection-title {{
                 color: #FF8C00;
@@ -376,7 +393,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .insight-card p, .action-card p {{
                 line-height: 1.6;
                 color: #333;
-                font-size: 13px;
+                font-size: 15px;
                 margin: 0;
             }}
             
@@ -400,7 +417,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 padding: 20px;
                 border-radius: 8px;
                 margin: 0 0 25px 0;
-                font-size: 14px;
+                font-size: 16px;
                 line-height: 1.6;
             }}
             .cta-text-box p {{
