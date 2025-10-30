@@ -315,6 +315,8 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 width: 40px;
                 height: 40px;
                 object-fit: contain;
+                display: block;
+                margin: 0 auto;
             }}
             .icon-label {{
                 color: #FF8C00;
@@ -457,7 +459,16 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .contact-icon {{
                 margin-right: 12px;
                 font-size: 20px;
-                color: #FF8C00;
+                width: 24px;
+                height: 24px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            .contact-icon img {{
+                width: 20px;
+                height: 20px;
+                object-fit: contain;
             }}
         </style>
     </head>
@@ -604,15 +615,21 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             </div>
             <div class="contact-info">
                 <div class="contact-item">
-                    <span class="contact-icon">🌐</span>
+                    <span class="contact-icon">
+                        <img src="{globe_icon_url}" alt="Website" />
+                    </span>
                     <span>www.beamxsolutions.com</span>
                 </div>
                 <div class="contact-item">
-                    <span class="contact-icon">✉️</span>
+                    <span class="contact-icon">
+                        <img src="{email_icon_url}" alt="Email" />
+                    </span>
                     <span>info@beamxsolutions.com</span>
                 </div>
                 <div class="contact-item">
-                    <span class="contact-icon">📅</span>
+                    <span class="contact-icon">
+                        <img src="{calendar_icon_url}" alt="Calendar" />
+                    </span>
                     <span>https://calendly.com/beamxsolutions</span>
                 </div>
             </div>
