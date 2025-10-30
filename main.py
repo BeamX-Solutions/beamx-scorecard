@@ -615,21 +615,12 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             </div>
             <div class="contact-info">
                 <div class="contact-item">
-                    <span class="contact-icon">
-                        <img src="{globe_icon_url}" alt="Website" />
-                    </span>
                     <span>www.beamxsolutions.com</span>
                 </div>
                 <div class="contact-item">
-                    <span class="contact-icon">
-                        <img src="{email_icon_url}" alt="Email" />
-                    </span>
                     <span>info@beamxsolutions.com</span>
                 </div>
                 <div class="contact-item">
-                    <span class="contact-icon">
-                        <img src="{calendar_icon_url}" alt="Calendar" />
-                    </span>
                     <span>https://calendly.com/beamxsolutions</span>
                 </div>
             </div>
