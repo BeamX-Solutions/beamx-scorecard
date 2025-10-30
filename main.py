@@ -271,22 +271,17 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             }}
             
             /* CONTENT PAGES */
-            .page-content {
+            .page-content {{
                 background: #f5f5f5;
-                /* Reserve space for the footer to avoid overlap on long pages */
-                padding: 40px 50px 160px;
-            }
-            /* Advisory page has less bottom padding to remove excess whitespace */
-            .page-content.page-advisory {
-                padding: 40px 50px 80px;
-            }
-            .executive-summary-box {
+                padding: 40px 50px 100px;
+            }}
+            .executive-summary-box {{
                 background: white;
                 border: 3px solid #0066cc;
                 padding: 30px;
                 margin: 0 0 40px 0;
-            }
-            .section-title {
+            }}
+            .section-title {{
                 color: #0066cc;
                 font-size: 28px;
                 font-weight: bold;
@@ -294,13 +289,13 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 padding-bottom: 8px;
                 border-bottom: 4px solid #0066cc;
                 display: inline-block;
-            }
-            .summary-icons {
+            }}
+            .summary-icons {{
                 display: flex;
                 justify-content: space-between;
                 margin: 25px 0 0 0;
                 gap: 15px;
-            }
+            }}
             .icon-item {{
                 text-align: center;
                 flex: 1;
@@ -351,20 +346,16 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 font-weight: 600;
                 margin: 0;
             }}
-            .score-table {
+            .score-table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin: 20px 0 40px 0;
+                margin: 20px 0 80px 0;
                 background: white;
-                /* Keep table and rows intact to prevent splitting/overlap near footer */
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            .score-table thead {
+            }}
+            .score-table thead {{
                 background: #FF8C00;
                 color: white;
-                display: table-header-group; /* ensure header stays above if table flows */
-            }
+            }}
             .score-table th {{
                 padding: 12px 18px;
                 text-align: center;
@@ -378,10 +369,10 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 border: 1px solid #ddd;
                 font-size: 15px;
             }}
-            .score-table tbody tr:nth-child(even) {
+            .score-table tbody tr:nth-child(even) {{
                 background: #f9f9f9;
-            }
-            .page-footer {
+            }}
+            .page-footer {{
                 position: absolute;
                 bottom: 0;
                 left: 0;
@@ -392,9 +383,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 display: flex;
                 justify-content: space-between;
                 font-size: 14px;
-                height: 56px; /* explicit height so page content can reserve space */
-                box-sizing: border-box;
-            }
+            }}
             .subsection-title {{
                 color: #FF8C00;
                 font-size: 22px;
@@ -603,7 +592,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
         </div>
 
         <!-- PAGE 3: STRATEGIC ADVISORY -->
-        <div class="page page-content page-advisory">
+        <div class="page page-content">
             <h2 class="section-title">Strategic Advisory & Recommendations</h2>
             <h3 class="subsection-title">Strategic Insights</h3>
             {insights_html}
