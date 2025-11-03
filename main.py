@@ -94,6 +94,11 @@ def calculate_circle_progress(score: int, max_score: int = 100) -> tuple:
     progress = (score / max_score) * circumference
     return circumference, progress
 
+def convert_bold_to_html(text: str) -> str:
+    """Convert **text** to <strong>text</strong>"""
+    import re
+    return re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+
 def parse_advisory_sections(advisory: str) -> Dict[str, list]:
     """Parse advisory text into structured sections with proper HTML formatting"""
     sections = {"insights": [], "actions": []}
@@ -127,6 +132,10 @@ def parse_advisory_sections(advisory: str) -> Dict[str, list]:
    
     if current_text and current_section:
         sections[current_section].append(' '.join(current_text))
+   
+    # Convert bold markdown to HTML in all items
+    sections['insights'] = [convert_bold_to_html(item) for item in sections['insights']]
+    sections['actions'] = [convert_bold_to_html(item) for item in sections['actions']]
    
     def split_into_pairs(items):
         pairs = []
@@ -406,7 +415,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .insight-card p, .action-card p {{
                 line-height: 1.5;
                 color: #333;
-                font-size: 13px;
+                font-size: 14px;
                 margin: 0;
             }}
             .bullet-list {{
@@ -415,13 +424,16 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 list-style-type: disc;
             }}
             .bullet-list li {{
-                line-height: 1.5;
+                line-height: 1.6;
                 color: #333;
-                font-size: 13px;
-                margin: 0 0 8px 0;
+                font-size: 14px;
+                margin: 0 0 10px 0;
             }}
             .bullet-list li:last-child {{
                 margin-bottom: 0;
+            }}
+            strong {{
+                font-weight: 700;
             }}
             
             /* CTA PAGE */
