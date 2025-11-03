@@ -95,7 +95,7 @@ def calculate_circle_progress(score: int, max_score: int = 100) -> tuple:
     return circumference, progress
 
 def parse_advisory_sections(advisory: str) -> Dict[str, list]:
-    """Parse advisory text into structured sections"""
+    """Parse advisory text into structured sections with proper HTML formatting"""
     sections = {"insights": [], "actions": []}
     current_section = None
     current_text = []
@@ -172,29 +172,29 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
     # Generate date
     generated_date = datetime.datetime.now().strftime('%B %d, %Y')
    
-    # Build insights grid HTML
+    # Build insights grid HTML with proper bullet formatting
     insights_html = ""
     if advisory_sections['insights']:
         for pair in advisory_sections['insights']:
             insights_html += '<div class="insight-row">'
             for insight in pair:
-                insights_html += f'<div class="insight-card"><p>{insight}</p></div>'
+                insights_html += f'<div class="insight-card"><ul class="bullet-list"><li>{insight}</li></ul></div>'
             insights_html += '</div>'
     else:
-        insights_html = '<div class="insight-row"><div class="insight-card"><p>No strategic insights available.</p></div></div>'
+        insights_html = '<div class="insight-row"><div class="insight-card"><ul class="bullet-list"><li>No strategic insights available.</li></ul></div></div>'
     
     logger.info(f"Generated insights HTML with {len(advisory_sections['insights'])} pairs")
    
-    # Build actions grid HTML
+    # Build actions grid HTML with proper bullet formatting
     actions_html = ""
     if advisory_sections['actions']:
         for pair in advisory_sections['actions']:
             actions_html += '<div class="action-row">'
             for action in pair:
-                actions_html += f'<div class="action-card"><p>{action}</p></div>'
+                actions_html += f'<div class="action-card"><ul class="bullet-list"><li>{action}</li></ul></div>'
             actions_html += '</div>'
     else:
-        actions_html = '<div class="action-row"><div class="action-card"><p>No action steps available.</p></div></div>'
+        actions_html = '<div class="action-row"><div class="action-card"><ul class="bullet-list"><li>No action steps available.</li></ul></div></div>'
     
     logger.info(f"Generated actions HTML with {len(advisory_sections['actions'])} pairs")
    
@@ -273,7 +273,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             /* CONTENT PAGES */
             .page-content {{
                 background: #f5f5f5;
-                padding: 40px 50px 100px;
+                padding: 30px 40px 80px;
             }}
             .executive-summary-box {{
                 background: white;
@@ -283,11 +283,11 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             }}
             .section-title {{
                 color: #0066cc;
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: bold;
-                margin: 0 0 20px 0;
-                padding-bottom: 8px;
-                border-bottom: 4px solid #0066cc;
+                margin: 0 0 15px 0;
+                padding-bottom: 6px;
+                border-bottom: 3px solid #0066cc;
                 display: inline-block;
             }}
             .summary-icons {{
@@ -333,10 +333,10 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .assessment-container {{
                 display: flex;
                 align-items: center;
-                gap: 40px;
-                margin: 20px 0 40px 0;
+                gap: 30px;
+                margin: 15px 0 30px 0;
                 background: white;
-                padding: 30px;
+                padding: 20px;
             }}
             .chart-section {{
                 flex-shrink: 0;
@@ -349,7 +349,7 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             .score-table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin: 20px 0 80px 0;
+                margin: 15px 0 50px 0;
                 background: white;
             }}
             .score-table thead {{
@@ -357,17 +357,17 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
                 color: white;
             }}
             .score-table th {{
-                padding: 12px 18px;
+                padding: 10px 14px;
                 text-align: center;
                 border: 1px solid #FF8C00;
                 font-weight: 700;
-                font-size: 16px;
+                font-size: 14px;
             }}
             .score-table td {{
-                padding: 12px 18px;
+                padding: 10px 14px;
                 text-align: center;
                 border: 1px solid #ddd;
-                font-size: 15px;
+                font-size: 13px;
             }}
             .score-table tbody tr:nth-child(even) {{
                 background: #f9f9f9;
@@ -386,28 +386,42 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             }}
             .subsection-title {{
                 color: #FF8C00;
-                font-size: 22px;
+                font-size: 18px;
                 font-weight: bold;
                 text-align: center;
-                margin: 0 0 20px 0;
+                margin: 0 0 15px 0;
             }}
             .insight-row, .action-row {{
                 display: flex;
-                gap: 20px;
-                margin: 0 0 20px 0;
+                gap: 15px;
+                margin: 0 0 15px 0;
             }}
             .insight-card, .action-card {{
                 background: white;
-                padding: 25px;
+                padding: 18px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                 flex: 1;
                 margin: 0;
             }}
             .insight-card p, .action-card p {{
-                line-height: 1.6;
+                line-height: 1.5;
                 color: #333;
-                font-size: 15px;
+                font-size: 13px;
                 margin: 0;
+            }}
+            .bullet-list {{
+                margin: 0;
+                padding-left: 20px;
+                list-style-type: disc;
+            }}
+            .bullet-list li {{
+                line-height: 1.5;
+                color: #333;
+                font-size: 13px;
+                margin: 0 0 8px 0;
+            }}
+            .bullet-list li:last-child {{
+                margin-bottom: 0;
             }}
             
             /* CTA PAGE */
