@@ -1030,6 +1030,16 @@ async def generate_report(input_data: ScorecardInput):
         }
         advisory = await generate_gpt5_advisory(input_data, scores)
        
+        # Build the result object
+        result = {
+            "total_score": total_score,
+            "label": label,
+            "breakdown": scores,
+            "advisory": advisory,
+            "industry": input_data.industry
+        }
+       
+        # Save to database
         supabase.table("basic_assessments").insert({
             **input_data.model_dump(),
             "scores": scores,
@@ -1038,13 +1048,20 @@ async def generate_report(input_data: ScorecardInput):
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
         }).execute()
        
-        return {
-            "total_score": total_score,
-            "label": label,
-            "breakdown": scores,
-            "advisory": advisory,
-            "industry": input_data.industry
-        }
+        # Automatically send email with results
+        try:
+            email_sent = send_email_with_resend(input_data.email, result, input_data)
+            if email_sent:
+                logger.info(f"Assessment results automatically sent to {input_data.email}")
+                result["email_sent"] = True
+            else:
+                logger.warning(f"Failed to automatically send email to {input_data.email}")
+                result["email_sent"] = False
+        except Exception as email_error:
+            logger.error(f"Error sending automatic email to {input_data.email}: {email_error}")
+            result["email_sent"] = False
+       
+        return result
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
