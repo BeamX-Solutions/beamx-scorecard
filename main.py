@@ -66,6 +66,8 @@ else:
 
 # Pydantic models
 class ScorecardInput(BaseModel):
+    fullName: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
     revenue: Literal["Under $10K", "$10K–$50K", "$50K–$250K", "$250K–$1M", "Over $1M"]
     profit_margin_known: Literal["Yes", "No"]
     monthly_expenses: Literal["Unknown", "≤$500", "$500–$1K", "$1K–$5K", "$5K–$20K", "$20K+"]
@@ -509,8 +511,9 @@ def generate_pdf_report(result: Dict, form_data: ScorecardInput) -> io.BytesIO:
             </div>
             <div class="cover-footer">
                 <div class="prepared-by">
-                    <p class="prepared-label">Prepared By</p>
-                    <p class="prepared-name">BeamX Solutions</p>
+                    <p class="prepared-label">Prepared For</p>
+                    <p class="prepared-name">{form_data.fullName}</p>
+                    <p class="prepared-name" style="font-size: 14px; margin-top: 5px;">{form_data.email}</p>
                 </div>
                 <div class="generated-on">
                     <p class="generated-label">Generated on</p>
@@ -786,7 +789,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
                             <tr>
                                 <td style="padding: 0 30px;">
                                     <p style="color: #1d1d1b; font-size: 14px; line-height: 20px; margin: 0;">
-                                        Hello!<br><br>
+                                        Hello {form_data.fullName}!<br><br>
                                         Thank you for completing the BeamX Solutions Business Assessment. Your tailored results are ready!
                                     </p>
                                 </td>
@@ -965,7 +968,7 @@ def send_email_with_resend(recipient_email: str, result: Dict, form_data: Scorec
        
         text_content = f"""
         Your Business Assessment Results - BeamX Solutions
-        Hello!
+        Hello {form_data.fullName}!
         Thank you for completing the BeamX Solutions Business Assessment. Your results are ready!
         Your Score: {result['total_score']}/100 ({result['label']})
         Score Breakdown:
@@ -1028,11 +1031,11 @@ async def generate_report(input_data: ScorecardInput):
         advisory = await generate_gpt5_advisory(input_data, scores)
        
         supabase.table("basic_assessments").insert({
-            **input_data.dict(),
+            **input_data.model_dump(),
             "scores": scores,
             "total_score": total_score,
             "advisory": advisory,
-            "generated_at": datetime.datetime.utcnow().isoformat()
+            "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
         }).execute()
        
         return {
