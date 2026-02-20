@@ -12,7 +12,6 @@ import logging
 from weasyprint import HTML
 from weasyprint.text.fonts import FontConfiguration
 from supabase import create_client, Client
-from openai import OpenAI
 import resend
 
 # ─────────────────────────────────────────────
@@ -32,7 +31,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
 resend_api_key = os.getenv("RESEND_API_KEY")
 from_email = os.getenv("FROM_EMAIL", "noreply@beamxsolutions.com")
@@ -967,6 +965,36 @@ async def generate_report(input_data: BeaconSMEInput):
 
     except Exception as e:
         logger.error(f"Report generation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/email-results")
+async def email_results(payload: dict):
+    """
+    Re-send the PDF report to any email address the user specifies.
+    Frontend sends: { email: str, formData: BeaconSMEInput dict }
+    """
+    try:
+        recipient_email = payload.get("email")
+        if not recipient_email:
+            raise HTTPException(status_code=400, detail="Email address is required")
+
+        # Reconstruct full assessment from submitted form data
+        form_data = BeaconSMEInput(**payload["formData"])
+        score = calculate_beacon_score(form_data)
+        advisory = generate_strategic_advisory(score)
+
+        # Override the email on the data object so it sends to the requested address
+        form_data_copy = form_data.model_copy(update={"email": recipient_email})
+
+        success = send_results_email(form_data_copy, score, advisory)
+        if success:
+            return {"status": "success", "message": f"Report sent to {recipient_email}"}
+        raise HTTPException(status_code=500, detail="Email delivery failed. Check Resend configuration.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Email results error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
