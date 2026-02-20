@@ -1057,7 +1057,7 @@ async def email_results(payload: dict):
             "attachments": [{"filename": "Beacon_Assessment_Report.pdf", "content": pdf_b64}]
         })
 
-        logger.info(f"Email sent to {recipient_email}, Resend ID: {response.get('id', 'unknown')}")
+        logger.info(f"Email sent to {recipient_email}, Resend ID: {getattr(response, 'id', 'unknown')}")
         return {"status": "success", "message": f"Report sent to {recipient_email}"}
 
     except HTTPException:
