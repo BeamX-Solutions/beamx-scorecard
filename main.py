@@ -12,6 +12,7 @@ import logging
 from weasyprint import HTML
 from weasyprint.text.fonts import FontConfiguration
 from supabase import create_client, Client
+from openai import OpenAI
 import resend
 
 # ─────────────────────────────────────────────
@@ -32,6 +33,7 @@ app.add_middleware(
 )
 
 supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 resend_api_key = os.getenv("RESEND_API_KEY")
 from_email = os.getenv("FROM_EMAIL", "noreply@beamxsolutions.com")
 if resend_api_key:
@@ -971,7 +973,7 @@ async def generate_report(input_data: BeaconSMEInput):
 @app.post("/email-results")
 async def email_results(payload: dict):
     """
-    Re-send the PDF report to any email address the user specifies.
+    Send the PDF report to any email address the user specifies.
     Frontend sends: { email: str, formData: BeaconSMEInput dict }
     """
     try:
@@ -982,20 +984,87 @@ async def email_results(payload: dict):
         # Reconstruct full assessment from submitted form data
         form_data = BeaconSMEInput(**payload["formData"])
         score = calculate_beacon_score(form_data)
-        advisory = generate_strategic_advisory(score)
 
-        # Override the email on the data object so it sends to the requested address
-        form_data_copy = form_data.model_copy(update={"email": recipient_email})
+        # Use the same advisory pipeline as /generate-report
+        structured_advisory = build_structured_advisory(score)
+        advisory = await polish_advisory_with_llm(
+            structured_advisory, score, form_data.fullName, form_data.businessName
+        )
 
-        success = send_results_email(form_data_copy, score, advisory)
-        if success:
-            return {"status": "success", "message": f"Report sent to {recipient_email}"}
-        raise HTTPException(status_code=500, detail="Email delivery failed. Check Resend configuration.")
+        # Send to the recipient email (not necessarily the form email)
+        form_data_for_email = form_data.model_copy(update={"email": recipient_email})
+
+        # Call send directly and surface the real error if it fails
+        if not resend_api_key:
+            raise HTTPException(status_code=500, detail="Email not configured on server. RESEND_API_KEY is missing.")
+
+        pdf_buffer = generate_pdf_report(score, form_data_for_email, advisory)
+        pdf_b64 = base64.b64encode(pdf_buffer.read()).decode()
+
+        response = resend.Emails.send({
+            "from": f"BeamX Solutions <{from_email}>",
+            "to": [recipient_email],
+            "subject": f"Your Beacon Report: {score.total_score}/100 — {score.readiness_level} | {form_data.businessName}",
+            "html": f"""<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0;">
+<table width="600" cellpadding="0" cellspacing="0">
+  <tr><td style="background:#02428e;padding:40px 20px;text-align:center;">
+    <img src="https://beamxsolutions.com/asset-1-2.png" width="112" height="50" style="display:block;margin:0 auto 20px;" />
+    <h1 style="color:white;font-size:26px;margin:0;">Your Beacon Assessment Results</h1>
+  </td></tr>
+  <tr><td style="height:20px;background:#f5f5f5;"></td></tr>
+  <tr><td style="padding:0 30px;background:#f5f5f5;">
+    <p style="font-size:14px;line-height:1.6;">Hello {form_data.fullName},<br><br>
+    Please find your Beacon Business Assessment report for <strong>{form_data.businessName}</strong> attached to this email.</p>
+  </td></tr>
+  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
+  <tr><td align="center" style="background:#f5f5f5;">
+    <table width="380" cellpadding="22" cellspacing="0" style="background:#0066cc;border-radius:8px;">
+      <tr><td>
+        <p style="color:white;font-size:20px;font-weight:700;margin:0;">Score: {score.total_score}/100</p>
+        <p style="color:white;font-size:13px;margin:6px 0 0;">Readiness Level: {score.readiness_level}</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
+  <tr><td style="padding:0 30px;background:#f5f5f5;">
+    <table width="100%" cellpadding="16" cellspacing="0" style="background:white;border-radius:8px;">
+      <tr><td>
+        <h2 style="color:#0066cc;font-size:15px;margin:0 0 14px;">Score Breakdown</h2>
+        <p style="font-size:13px;margin:0 0 8px;">💰 Financial Health: <strong>{score.financial_health.score}/20</strong> — {score.financial_health.grade}</p>
+        <p style="font-size:13px;margin:0 0 8px;">🤝 Customer Strength: <strong>{score.customer_strength.score}/20</strong> — {score.customer_strength.grade}</p>
+        <p style="font-size:13px;margin:0 0 8px;">⚙️ Operational Maturity: <strong>{score.operational_maturity.score}/20</strong> — {score.operational_maturity.grade}</p>
+        <p style="font-size:13px;margin:0 0 8px;">📊 Financial Intelligence: <strong>{score.financial_intelligence.score}/20</strong> — {score.financial_intelligence.grade}</p>
+        <p style="font-size:13px;margin:0;">📈 Growth & Resilience: <strong>{score.growth_resilience.score}/20</strong> — {score.growth_resilience.grade}</p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
+  <tr><td align="center" style="background:#f5f5f5;">
+    <table cellpadding="0" cellspacing="0"><tr>
+      <td style="background:#FF8C00;border-radius:8px;">
+        <a href="https://calendly.com/beamxsolutions" style="display:inline-block;padding:13px 26px;color:white;text-decoration:none;font-size:14px;font-weight:700;">Book Your Free Strategy Call</a>
+      </td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
+  <tr><td style="background:#02428e;padding:20px;text-align:center;">
+    <p style="color:white;font-size:12px;margin:0 0 6px;">www.beamxsolutions.com | info@beamxsolutions.com</p>
+    <p style="color:white;font-size:11px;margin:0;">Copyright © 2025 BeamX Solutions</p>
+  </td></tr>
+</table></td></tr></table>
+</body>""",
+            "attachments": [{"filename": "Beacon_Assessment_Report.pdf", "content": pdf_b64}]
+        })
+
+        logger.info(f"Email sent to {recipient_email}, Resend ID: {response.get('id', 'unknown')}")
+        return {"status": "success", "message": f"Report sent to {recipient_email}"}
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Email results error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Email results error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Email failed: {str(e)}")
 
 
 @app.get("/health")
