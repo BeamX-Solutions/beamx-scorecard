@@ -891,6 +891,25 @@ def send_results_email(data: BeaconSMEInput, score: BeaconScore, advisory: str) 
 # API ENDPOINTS
 # ─────────────────────────────────────────────
 
+@app.post("/download-pdf")
+async def download_pdf(payload: dict):
+    """Generate and return PDF for direct browser download"""
+    try:
+        # Re-parse the input data from the payload
+        form_data = BeaconSMEInput(**payload["formData"])
+        score = calculate_beacon_score(form_data)
+        advisory = generate_strategic_advisory(score)
+        pdf_buffer = generate_pdf_report(score, form_data, advisory)
+        from fastapi.responses import StreamingResponse
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=Beacon_Assessment_{form_data.businessName.replace(' ', '_')}.pdf"}
+        )
+    except Exception as e:
+        logger.error(f"PDF download error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/generate-report")
 async def generate_report(input_data: BeaconSMEInput):
     try:
