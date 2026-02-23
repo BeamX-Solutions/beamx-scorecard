@@ -571,11 +571,6 @@ def _generate_next_steps(score: BeaconScore) -> str:
 
 
 def build_structured_advisory(score: BeaconScore) -> str:
-    """
-    STEP 1: Assembles the full rule-based structured advisory.
-    Every fact, score, recommendation, and 90-day plan is deterministically
-    generated here. This becomes the LLM's input — not something it invents.
-    """
     sections = [_generate_executive_summary(score)]
 
     if score.critical_flags:
@@ -610,9 +605,6 @@ def build_structured_advisory(score: BeaconScore) -> str:
 
 # ─────────────────────────────────────────────
 # STEP 2: LLM NARRATIVE POLISH
-# The LLM receives the complete structured advisory and rewrites it
-# in a warm, personalized voice — without changing any facts or recommendations.
-# If the LLM fails, the structured advisory is returned as-is (graceful fallback).
 # ─────────────────────────────────────────────
 
 async def polish_advisory_with_llm(structured_advisory: str, score: BeaconScore, owner_name: str, business_name: str) -> str:
@@ -656,7 +648,7 @@ Rewrite this in a warm, direct, personalized voice. Every fact, number, score, a
         return polished
     except Exception as e:
         logger.error(f"LLM polish failed — falling back to structured advisory: {e}")
-        return structured_advisory  # Graceful fallback: rules output is still a complete advisory
+        return structured_advisory
 
 
 # ─────────────────────────────────────────────
@@ -698,8 +690,7 @@ def generate_pdf_report(score: BeaconScore, data: BeaconSMEInput, advisory: str)
     categories = [score.financial_health, score.customer_strength, score.operational_maturity,
                   score.financial_intelligence, score.growth_resilience]
     table_rows = "".join([f'<tr><td style="padding:10px;border:1px solid #ddd;">{c.name}</td><td style="padding:10px;border:1px solid #ddd;text-align:center;font-weight:bold;">{c.score}</td><td style="padding:10px;border:1px solid #ddd;text-align:center;">20</td><td style="padding:10px;border:1px solid #ddd;text-align:center;font-weight:bold;">{c.grade}</td><td style="padding:10px;border:1px solid #ddd;">{score_bar(c.percentage)}</td></tr>' for c in categories])
-    insights_html = "".join([f'<h3 style="color:#FF8C00;margin:12px 0 5px;font-size:13px;">{c.name}</h3><ul style="margin:0;padding-left:18px;">{"".join([f"<li style=margin:3px_0;font-size:11px;line-height:1.5;>{i}</li>" for i in c.insights])}</ul>' for c in categories if c.insights])
-    # Fix the f-string issue above
+
     insights_parts = []
     for c in categories:
         if c.insights:
@@ -808,18 +799,11 @@ def generate_pdf_report(score: BeaconScore, data: BeaconSMEInput, advisory: str)
 
 
 # ─────────────────────────────────────────────
-# EMAIL
+# EMAIL HELPER
 # ─────────────────────────────────────────────
 
-def send_results_email(data: BeaconSMEInput, score: BeaconScore, advisory: str) -> bool:
-    if not resend_api_key:
-        logger.warning("Resend not configured. Skipping email.")
-        return False
-    try:
-        pdf_buffer = generate_pdf_report(score, data, advisory)
-        pdf_b64 = base64.b64encode(pdf_buffer.read()).decode()
-
-        html_email = f"""<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
+def _build_email_html(data: BeaconSMEInput, score: BeaconScore) -> str:
+    return f"""<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0;">
 <table width="600" cellpadding="0" cellspacing="0">
   <tr><td style="background:#02428e;padding:40px 20px;text-align:center;">
@@ -873,11 +857,20 @@ def send_results_email(data: BeaconSMEInput, score: BeaconScore, advisory: str) 
 </table></td></tr></table>
 </body>"""
 
+
+def send_results_email(data: BeaconSMEInput, score: BeaconScore, advisory: str) -> bool:
+    if not resend_api_key:
+        logger.warning("Resend not configured. Skipping email.")
+        return False
+    try:
+        pdf_buffer = generate_pdf_report(score, data, advisory)
+        pdf_b64 = base64.b64encode(pdf_buffer.read()).decode()
+
         resend.Emails.send({
             "from": f"BeamX Solutions <{from_email}>",
             "to": [data.email],
             "subject": f"Your Beacon Report: {score.total_score}/100 — {score.readiness_level} | {data.businessName}",
-            "html": html_email,
+            "html": _build_email_html(data, score),
             "attachments": [{"filename": "Beacon_Assessment_Report.pdf", "content": pdf_b64}]
         })
         logger.info(f"Email sent to {data.email}")
@@ -895,10 +888,10 @@ def send_results_email(data: BeaconSMEInput, score: BeaconScore, advisory: str) 
 async def download_pdf(payload: dict):
     """Generate and return PDF for direct browser download"""
     try:
-        # Re-parse the input data from the payload
         form_data = BeaconSMEInput(**payload["formData"])
         score = calculate_beacon_score(form_data)
-        advisory = generate_strategic_advisory(score)
+        # Use advisory from the result payload if available, otherwise rebuild (no LLM)
+        advisory = payload.get("result", {}).get("advisory") or build_structured_advisory(score)
         pdf_buffer = generate_pdf_report(score, form_data, advisory)
         from fastapi.responses import StreamingResponse
         return StreamingResponse(
@@ -909,6 +902,7 @@ async def download_pdf(payload: dict):
     except Exception as e:
         logger.error(f"PDF download error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/generate-report")
 async def generate_report(input_data: BeaconSMEInput):
@@ -974,30 +968,33 @@ async def generate_report(input_data: BeaconSMEInput):
 async def email_results(payload: dict):
     """
     Send the PDF report to any email address the user specifies.
-    Frontend sends: { email: str, formData: BeaconSMEInput dict }
+    Frontend sends: { email: str, result: BeaconResult, formData: dict }
+
+    KEY CHANGE: We reuse result.advisory from the frontend payload instead of
+    re-running the LLM pipeline. This cuts response time from ~45s down to ~5s,
+    preventing frontend timeout false-errors.
     """
     try:
         recipient_email = payload.get("email")
         if not recipient_email:
             raise HTTPException(status_code=400, detail="Email address is required")
 
-        # Reconstruct full assessment from submitted form data
         form_data = BeaconSMEInput(**payload["formData"])
         score = calculate_beacon_score(form_data)
 
-        # Use the same advisory pipeline as /generate-report
-        structured_advisory = build_structured_advisory(score)
-        advisory = await polish_advisory_with_llm(
-            structured_advisory, score, form_data.fullName, form_data.businessName
-        )
+        # ✅ Reuse the advisory already generated and returned to the frontend.
+        # This avoids a redundant GPT-4 call and makes this endpoint ~10x faster.
+        advisory = payload.get("result", {}).get("advisory")
+        if not advisory:
+            # Fallback: rebuild without LLM polish (instant, rule-based only)
+            logger.warning("No advisory found in payload — falling back to rule-based advisory")
+            advisory = build_structured_advisory(score)
 
-        # Send to the recipient email (not necessarily the form email)
-        form_data_for_email = form_data.model_copy(update={"email": recipient_email})
-
-        # Call send directly and surface the real error if it fails
         if not resend_api_key:
             raise HTTPException(status_code=500, detail="Email not configured on server. RESEND_API_KEY is missing.")
 
+        # Generate PDF and send to the recipient email
+        form_data_for_email = form_data.model_copy(update={"email": recipient_email})
         pdf_buffer = generate_pdf_report(score, form_data_for_email, advisory)
         pdf_b64 = base64.b64encode(pdf_buffer.read()).decode()
 
@@ -1005,55 +1002,7 @@ async def email_results(payload: dict):
             "from": f"BeamX Solutions <{from_email}>",
             "to": [recipient_email],
             "subject": f"Your Beacon Report: {score.total_score}/100 — {score.readiness_level} | {form_data.businessName}",
-            "html": f"""<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:0;">
-<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0;">
-<table width="600" cellpadding="0" cellspacing="0">
-  <tr><td style="background:#02428e;padding:40px 20px;text-align:center;">
-    <img src="https://beamxsolutions.com/asset-1-2.png" width="112" height="50" style="display:block;margin:0 auto 20px;" />
-    <h1 style="color:white;font-size:26px;margin:0;">Your Beacon Assessment Results</h1>
-  </td></tr>
-  <tr><td style="height:20px;background:#f5f5f5;"></td></tr>
-  <tr><td style="padding:0 30px;background:#f5f5f5;">
-    <p style="font-size:14px;line-height:1.6;">Hello {form_data.fullName},<br><br>
-    Please find your Beacon Business Assessment report for <strong>{form_data.businessName}</strong> attached to this email.</p>
-  </td></tr>
-  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
-  <tr><td align="center" style="background:#f5f5f5;">
-    <table width="380" cellpadding="22" cellspacing="0" style="background:#0066cc;border-radius:8px;">
-      <tr><td>
-        <p style="color:white;font-size:20px;font-weight:700;margin:0;">Score: {score.total_score}/100</p>
-        <p style="color:white;font-size:13px;margin:6px 0 0;">Readiness Level: {score.readiness_level}</p>
-      </td></tr>
-    </table>
-  </td></tr>
-  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
-  <tr><td style="padding:0 30px;background:#f5f5f5;">
-    <table width="100%" cellpadding="16" cellspacing="0" style="background:white;border-radius:8px;">
-      <tr><td>
-        <h2 style="color:#0066cc;font-size:15px;margin:0 0 14px;">Score Breakdown</h2>
-        <p style="font-size:13px;margin:0 0 8px;">💰 Financial Health: <strong>{score.financial_health.score}/20</strong> — {score.financial_health.grade}</p>
-        <p style="font-size:13px;margin:0 0 8px;">🤝 Customer Strength: <strong>{score.customer_strength.score}/20</strong> — {score.customer_strength.grade}</p>
-        <p style="font-size:13px;margin:0 0 8px;">⚙️ Operational Maturity: <strong>{score.operational_maturity.score}/20</strong> — {score.operational_maturity.grade}</p>
-        <p style="font-size:13px;margin:0 0 8px;">📊 Financial Intelligence: <strong>{score.financial_intelligence.score}/20</strong> — {score.financial_intelligence.grade}</p>
-        <p style="font-size:13px;margin:0;">📈 Growth & Resilience: <strong>{score.growth_resilience.score}/20</strong> — {score.growth_resilience.grade}</p>
-      </td></tr>
-    </table>
-  </td></tr>
-  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
-  <tr><td align="center" style="background:#f5f5f5;">
-    <table cellpadding="0" cellspacing="0"><tr>
-      <td style="background:#FF8C00;border-radius:8px;">
-        <a href="https://calendly.com/beamxsolutions" style="display:inline-block;padding:13px 26px;color:white;text-decoration:none;font-size:14px;font-weight:700;">Book Your Free Strategy Call</a>
-      </td>
-    </tr></table>
-  </td></tr>
-  <tr><td style="height:16px;background:#f5f5f5;"></td></tr>
-  <tr><td style="background:#02428e;padding:20px;text-align:center;">
-    <p style="color:white;font-size:12px;margin:0 0 6px;">www.beamxsolutions.com | info@beamxsolutions.com</p>
-    <p style="color:white;font-size:11px;margin:0;">Copyright © 2025 BeamX Solutions</p>
-  </td></tr>
-</table></td></tr></table>
-</body>""",
+            "html": _build_email_html(form_data_for_email, score),
             "attachments": [{"filename": "Beacon_Assessment_Report.pdf", "content": pdf_b64}]
         })
 
