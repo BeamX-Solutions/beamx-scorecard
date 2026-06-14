@@ -32,7 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 resend_api_key = os.getenv("RESEND_API_KEY")
 from_email = os.getenv("FROM_EMAIL", "noreply@beamxsolutions.com")
